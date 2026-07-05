@@ -1,0 +1,40 @@
+namespace ori.game.entity_collision
+
+import ori.math.vec2 as vec2
+import ori.game.entity as entity
+import ori.game.shape as shape
+
+// ── Entity Collision ──────────────────────────────────────
+
+public func entities_collide(a: Entity, b: Entity) -> bool
+    var rect_a = shape.Rectangle(
+        x: a.pos.x - a.size / 2.0,
+        y: a.pos.y - a.size / 2.0,
+        width: a.size,
+        height: a.size
+    )
+    var rect_b = shape.Rectangle(
+        x: b.pos.x - b.size / 2.0,
+        y: b.pos.y - b.size / 2.0,
+        width: b.size,
+        height: b.size
+    )
+    return collision.rects_collide(rect_a, rect_b)
+end
+
+public func check_all_collisions(entities: list<Entity>) -> void
+    for i in range(0, entities.len())
+        for j in range(i + 1, entities.len())
+            if entities[i].alive and entities[j].alive
+                if entities_collide(entities[i], entities[j])
+                    if entities[i].on_hit_fn != nil
+                        entities[i].on_hit_fn(entities[i], entities[j])
+                    end
+                    if entities[j].on_hit_fn != nil
+                        entities[j].on_hit_fn(entities[j], entities[i])
+                    end
+                end
+            end
+        end
+    end
+end

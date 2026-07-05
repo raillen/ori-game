@@ -1,0 +1,15 @@
+[package]
+name = "ori-game"
+version = "0.1.0"
+description = "Game engine and raylib bindings for Ori language"
+authors = ["Ori Team"]
+
+[dependencies]
+ori = "0.2.0"
+
+[native_libs]
+# Platform-specific raylib static libraries
+# These will be vendored in the lib/ directory
+# x86_64-pc-windows-msvc/raylib.lib
+# x86_64-unknown-linux-gnu/libraylib.a
+# x86_64-apple-darwin/libraylib.a

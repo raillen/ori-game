@@ -1,0 +1,110 @@
+namespace ori.game.mechanics.ai
+
+import ori.math.vec2 as vec2
+import ori.game.entity as entity
+
+// ── Patrol ────────────────────────────────────────────────
+
+public struct PatrolState
+    points: list<vec2.Vec2>
+    current_index: int = 0
+    speed: float = 100.0
+    wait_time: float = 0.0
+    current_wait: float = 0.0
+end
+
+public func update_patrol(e: Entity, state: PatrolState, dt: float) -> void
+    if state.points.len() == 0
+        return
+    end
+
+    // Wait at patrol point
+    if state.current_wait > 0.0
+        state.current_wait = state.current_wait - dt
+        e.vel.x = 0.0
+        e.vel.y = 0.0
+        return
+    end
+
+    var target = state.points[state.current_index]
+    var dir = vec2.normalize(target - e.pos)
+    var dist = vec2.distance(e.pos, target)
+
+    if dist < 5.0
+        // Reached patrol point, move to next
+        state.current_index = (state.current_index + 1) % state.points.len()
+        state.current_wait = state.wait_time
+        e.vel.x = 0.0
+        e.vel.y = 0.0
+    else
+        e.vel.x = dir.x * state.speed
+        e.vel.y = dir.y * state.speed
+    end
+end
+
+// ── Chase ─────────────────────────────────────────────────
+
+public func update_chase(e: Entity, target: vec2.Vec2, speed: float, dt: float) -> void
+    var dir = vec2.normalize(target - e.pos)
+    e.vel.x = dir.x * speed
+    e.vel.y = dir.y * speed
+end
+
+// ── Flee ──────────────────────────────────────────────────
+
+public func update_flee(e: Entity, threat: vec2.Vec2, speed: float, dt: float) -> void
+    var dir = vec2.normalize(e.pos - threat)
+    e.vel.x = dir.x * speed
+    e.vel.y = dir.y * speed
+end
+
+// ── Wander ────────────────────────────────────────────────
+
+public struct WanderState
+    radius: float = 100.0
+    speed: float = 50.0
+    change_timer: float = 0.0
+    change_interval: float = 2.0
+    wander_target: vec2.Vec2 = nil
+    origin: vec2.Vec2 = nil
+end
+
+public func update_wander(e: Entity, state: WanderState, dt: float) -> void
+    if state.origin == nil
+        state.origin = e.pos
+    end
+
+    state.change_timer = state.change_timer - dt
+
+    if state.change_timer <= 0.0 or state.wander_target == nil
+        // Pick new random target within radius
+        var angle = math.random(0.0, 6.283185307) // 2*PI
+        var dist = math.random(0.0, state.radius)
+        state.wander_target = vec2.Vec2(
+            x: state.origin.x + math.cos(angle) * dist,
+            y: state.origin.y + math.sin(angle) * dist
+        )
+        state.change_timer = state.change_interval
+    end
+
+    var dir = vec2.normalize(state.wander_target - e.pos)
+    var dist = vec2.distance(e.pos, state.wander_target)
+
+    if dist < 5.0
+        state.wander_target = nil
+    else
+        e.vel.x = dir.x * state.speed
+        e.vel.y = dir.y * state.speed
+    end
+end
+
+// ── Perception ────────────────────────────────────────────
+
+public func can_see(e: Entity, target: vec2.Vec2, max_dist: float) -> bool
+    var dist = vec2.distance(e.pos, target)
+    return dist <= max_dist
+end
+
+public func distance_to(e: Entity, target: vec2.Vec2) -> float
+    return vec2.distance(e.pos, target)
+end

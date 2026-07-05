@@ -1,0 +1,99 @@
+import ori.game as game
+import ori.game.engine as engine
+import ori.game.input as input
+import ori.game.draw as draw
+import ori.game.camera as camera
+import ori.game.color as color
+import ori.game.shape as shape
+import ori.game.collision as collision
+import ori.game.mechanics.jumps as jumps
+import ori.game.mechanics.movement as movement
+import ori.math.vec2 as vec2
+
+struct Player
+    pos: vec2.Vec2
+    vel: vec2.Vec2
+    speed: float = 150.0
+    jump_config: jumps.JumpConfig
+    jump_state: jumps.JumpState
+end
+
+struct Platform
+    rect: shape.Rectangle
+    moving: bool = false
+    speed: float = 50.0
+    dir: float = 1.0
+end
+
+var player: Player = nil
+var platforms: list<Platform> = []
+var camera: camera.Camera = nil
+
+func init() -> void
+    player = Player(
+        pos: vec2.Vec2(x: 100.0, y: 300.0),
+        vel: vec2.Vec2(x: 0.0, y: 0.0),
+        jump_config: jumps.JumpConfig(height: 250.0),
+        jump_state: jumps.JumpState()
+    )
+
+    platforms.add(Platform(rect: shape.Rectangle(x: 0.0, y: 400.0, width: 800.0, height: 50.0)))
+    platforms.add(Platform(rect: shape.Rectangle(x: 200.0, y: 300.0, width: 100.0, height: 20.0)))
+    platforms.add(Platform(rect: shape.Rectangle(x: 400.0, y: 250.0, width: 100.0, height: 20.0), moving: true))
+
+    camera = camera.create_camera(vec2.Vec2(x: 400.0, y: 300.0))
+    camera.follow(player)
+end
+
+func update(dt: float) -> void
+    -- Movement
+    movement.move_4axis(player, player.speed, dt, 38, 40, 37, 39)
+
+    -- Jump
+    if input.key_pressed(25)
+        jumps.apply_jump(player, player.jump_state, player.jump_config)
+    end
+
+    -- Physics
+    player.vel.y = player.vel.y + 980.0 * dt
+
+    -- Collision with platforms
+    player.jump_state.on_ground = false
+    for p in platforms
+        if collision.rects_collide(
+            shape.Rectangle(x: player.pos.x, y: player.pos.y, width: 16.0, height: 16.0),
+            p.rect
+        )
+            if player.vel.y > 0.0
+                player.pos.y = p.rect.y - 16.0
+                player.vel.y = 0.0
+                player.jump_state.on_ground = true
+            end
+        end
+    end
+
+    -- Update position
+    player.pos.x = player.pos.x + player.vel.x * dt
+    player.pos.y = player.pos.y + player.vel.y * dt
+
+    -- Update jump state
+    jumps.update_jump_state(player.jump_state, player.jump_config, dt)
+
+    -- Update camera
+    camera.update_camera(camera, dt)
+end
+
+func draw_game() -> void
+    draw.draw_rect(platforms[0].rect, color.GREEN)
+    draw.draw_rect(platforms[1].rect, color.BLUE)
+    draw.draw_rect(platforms[2].rect, color.RED)
+
+    draw.draw_circle(player.pos, 8.0, color.YELLOW)
+
+    draw.draw_text("Arrow keys to move, UP to jump", vec2.Vec2(x: 10.0, y: 10.0), 20, color.WHITE)
+end
+
+func main()
+    init()
+    game.run_game("Platformer", 800, 600, update, draw_game)
+end

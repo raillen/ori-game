@@ -1,0 +1,65 @@
+namespace ori.game.state_machine
+
+// ── State ─────────────────────────────────────────────────
+
+public struct State
+    name: string
+    on_enter: func() -> void
+    on_update: func(float) -> void
+    on_exit: func() -> void
+end
+
+// ── State Machine ─────────────────────────────────────────
+
+public struct StateMachine
+    current: State = nil
+    states: map<string, State>
+    previous_name: string = ""
+end
+
+// ── State Machine Functions ───────────────────────────────
+
+public func create_state_machine() -> StateMachine
+    return StateMachine(states: map<string, State>())
+end
+
+public func add_state(sm: StateMachine, state: State) -> void
+    sm.states[state.name] = state
+end
+
+public func change_state(sm: StateMachine, name: string) -> void
+    if not sm.states.has(name)
+        return
+    end
+
+    // Exit current state
+    if sm.current != nil
+        sm.current.on_exit()
+        sm.previous_name = sm.current.name
+    end
+
+    // Enter new state
+    sm.current = sm.states[name]
+    sm.current.on_enter()
+end
+
+public func update_state(sm: StateMachine, dt: float) -> void
+    if sm.current != nil
+        sm.current.on_update(dt)
+    end
+end
+
+public func get_current_state_name(sm: StateMachine) -> string
+    if sm.current != nil
+        return sm.current.name
+    end
+    return ""
+end
+
+public func get_previous_state_name(sm: StateMachine) -> string
+    return sm.previous_name
+end
+
+public func is_in_state(sm: StateMachine, name: string) -> bool
+    return sm.current != nil and sm.current.name == name
+end

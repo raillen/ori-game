@@ -1,0 +1,71 @@
+namespace ori.game.mechanics.movement
+
+import ori.math.vec2 as vec2
+import ori.game.entity as entity
+import ori.game.input as input
+
+// ── 4-Axis Movement ───────────────────────────────────────
+
+public func move_4axis(e: Entity, speed: float, dt: float, up: int, down: int, left: int, right: int) -> void
+    var dir = vec2.Vec2(x: 0.0, y: 0.0)
+
+    if input.key_down(right)
+        dir.x = 1.0
+    end
+    if input.key_down(left)
+        dir.x = -1.0
+    end
+    if input.key_down(down)
+        dir.y = 1.0
+    end
+    if input.key_down(up)
+        dir.y = -1.0
+    end
+
+    e.vel.x = dir.x * speed
+    e.vel.y = dir.y * speed
+end
+
+// ── 8-Axis Movement ───────────────────────────────────────
+
+public func move_8axis(e: Entity, speed: float, dt: float, up: int, down: int, left: int, right: int) -> void
+    var dir = vec2.Vec2(x: 0.0, y: 0.0)
+
+    if input.key_down(right)
+        dir.x = 1.0
+    end
+    if input.key_down(left)
+        dir.x = -1.0
+    end
+    if input.key_down(down)
+        dir.y = 1.0
+    end
+    if input.key_down(up)
+        dir.y = -1.0
+    end
+
+    // Normalize diagonal movement
+    if dir.x != 0.0 and dir.y != 0.0
+        dir = vec2.normalize(dir)
+    end
+
+    e.vel.x = dir.x * speed
+    e.vel.y = dir.y * speed
+end
+
+// ── Grid Movement ─────────────────────────────────────────
+
+public func move_grid(e: Entity, grid_size: int, dir: vec2.Vec2) -> vec2.Vec2
+    var target = vec2.Vec2(
+        x: math.round(e.pos.x / grid_size.float) * grid_size.float + dir.x * grid_size.float,
+        y: math.round(e.pos.y / grid_size.float) * grid_size.float + dir.y * grid_size.float
+    )
+    return target
+end
+
+public func snap_to_grid(pos: vec2.Vec2, grid_size: int) -> vec2.Vec2
+    return vec2.Vec2(
+        x: math.round(pos.x / grid_size.float) * grid_size.float,
+        y: math.round(pos.y / grid_size.float) * grid_size.float
+    )
+end

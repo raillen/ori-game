@@ -1,0 +1,80 @@
+namespace test.engine
+
+import ori.game.engine as engine
+import ori.game.timer as timer
+import ori.math.vec2 as vec2
+
+func test_engine_creation() -> void
+    var eng = engine.create_engine()
+    assert(eng.entities.len() == 0)
+    assert(eng.next_id == 0)
+end
+
+func test_spawn_entity() -> void
+    var eng = engine.create_engine()
+    var e = engine.spawn_entity(eng, vec2.Vec2(x: 100.0, y: 200.0),
+        update_fn = do(e: Entity, dt: float) => end,
+        draw_fn = do(e: Entity) => end
+    )
+    assert(e.id == 0)
+    assert(e.pos.x == 100.0)
+    assert(e.pos.y == 200.0)
+    assert(eng.entities.len() == 1)
+end
+
+func test_timer() -> void
+    var completed = false
+    var t = timer.create_timer(1.0, false, do() =>
+        completed = true
+    end)
+
+    timer.tick_timer(t, 0.5)
+    assert(not completed)
+    assert(t.active)
+
+    timer.tick_timer(t, 0.6)
+    assert(completed)
+    assert(not t.active)
+end
+
+func test_repeat_timer() -> void
+    var count = 0
+    var t = timer.create_timer(0.5, true, do() =>
+        count = count + 1
+    end)
+
+    timer.tick_timer(t, 0.6)
+    assert(count == 1)
+    assert(t.active)
+
+    timer.tick_timer(t, 0.6)
+    assert(count == 2)
+end
+
+func test_destroy_entity() -> void
+    var eng = engine.create_engine()
+    var e = engine.spawn_entity(eng, vec2.Vec2(x: 0.0, y: 0.0),
+        update_fn = do(e: Entity, dt: float) => end,
+        draw_fn = do(e: Entity) => end
+    )
+
+    engine.destroy(e)
+    assert(not e.alive)
+
+    engine.cleanup_dead(eng)
+    assert(eng.entities.len() == 0)
+end
+
+func test_systems() -> void
+    var eng = engine.create_engine()
+    var updated = false
+
+    engine.register_system(eng, "test_system", do(entities: list<Entity>, dt: float) =>
+        updated = true
+    end)
+
+    engine.enable_system(eng, "test_system")
+    engine.tick(eng, 0.016)
+
+    assert(updated)
+end

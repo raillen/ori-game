@@ -1,0 +1,88 @@
+namespace ori.game.mechanics.ropes
+
+import ori.math.vec2 as vec2
+import ori.game.entity as entity
+
+// ── Rope ──────────────────────────────────────────────────
+
+public struct Rope
+    anchor: vec2.Vec2
+    length: float
+    segments: int = 10
+    angle: float = 0.0
+    ang_vel: float = 0.0
+    attached: bool = false
+    damping: float = 0.99
+    gravity: float = 980.0
+    swing_speed: float = 3.0
+end
+
+// ── Rope Functions ────────────────────────────────────────
+
+public func create_rope(anchor: vec2.Vec2, length: float) -> Rope
+    return Rope(anchor: anchor, length: length)
+end
+
+public func attach_to_rope(e: Entity, rope: Rope) -> void
+    rope.attached = true
+    // Calculate initial angle based on entity position
+    var dx = e.pos.x - rope.anchor.x
+    var dy = e.pos.y - rope.anchor.y
+    rope.angle = math.atan2(dy, dx)
+end
+
+public func detach_from_rope(e: Entity, rope: Rope) -> void
+    rope.attached = false
+    // Apply current velocity as impulse
+    var swing_vel = rope.ang_vel * rope.length
+    e.vel.x = e.vel.x + math.cos(rope.angle + 1.570796327) * swing_vel  // Perpendicular
+    e.vel.y = e.vel.y + math.sin(rope.angle + 1.570796327) * swing_vel
+end
+
+public func swing_rope(e: Entity, rope: Rope, input_dir: float, dt: float) -> void
+    if not rope.attached
+        return
+    end
+
+    // Apply input force
+    rope.ang_vel = rope.ang_vel + input_dir * rope.swing_speed * dt
+
+    // Apply gravity (pendulum physics)
+    var gravity_force = (rope.gravity / rope.length) * math.sin(rope.angle)
+    rope.ang_vel = rope.ang_vel + gravity_force * dt
+
+    // Apply damping
+    rope.ang_vel = rope.ang_vel * rope.damping
+
+    // Update angle
+    rope.angle = rope.angle + rope.ang_vel * dt
+
+    // Update entity position
+    var end_pos = get_rope_end(rope)
+    e.pos.x = end_pos.x
+    e.pos.y = end_pos.y
+end
+
+public func get_rope_end(rope: Rope) -> vec2.Vec2
+    return vec2.Vec2(
+        x: rope.anchor.x + math.cos(rope.angle) * rope.length,
+        y: rope.anchor.y + math.sin(rope.angle) * rope.length
+    )
+end
+
+public func get_rope_points(rope: Rope) -> list<vec2.Vec2>
+    var points = list<vec2.Vec2>()
+    var segment_length = rope.length / rope.segments.float
+
+    for i in range(0, rope.segments + 1)
+        var t = i.float / rope.segments.float
+        var sag = t * t * 20.0  // Simple sag effect
+
+        points.add(vec2.Vec2(
+            x: rope.anchor.x + math.cos(rope.angle) * segment_length * i.float,
+            y: rope.anchor.y + math.sin(rope.angle) * segment_length * i.float + sag
+        ))
+    end
+
+    return points
+end

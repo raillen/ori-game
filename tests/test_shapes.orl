@@ -1,0 +1,35 @@
+namespace test.shapes
+
+import ori.game.shape as shape
+import ori.game.color as color
+import ori.math.vec2 as vec2
+
+func test_rectangle_creation() -> void
+    var rect = shape.Rectangle(x: 10.0, y: 20.0, width: 100.0, height: 50.0)
+    assert(rect.x == 10.0)
+    assert(rect.y == 20.0)
+    assert(rect.width == 100.0)
+    assert(rect.height == 50.0)
+end
+
+func test_circle_creation() -> void
+    var circle = shape.Circle(x: 50.0, y: 50.0, radius: 25.0)
+    assert(circle.x == 50.0)
+    assert(circle.y == 50.0)
+    assert(circle.radius == 25.0)
+end
+
+func test_color_creation() -> void
+    var c = color.from_rgb(255, 128, 0)
+    assert(c.r == 255)
+    assert(c.g == 128)
+    assert(c.b == 0)
+    assert(c.a == 255)
+end
+
+func test_color_hex() -> void
+    var c = color.from_hex(0xFF8000)
+    assert(c.r == 255)
+    assert(c.g == 128)
+    assert(c.b == 0)
+end

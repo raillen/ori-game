@@ -1,0 +1,118 @@
+namespace ori.game.mechanics.platforms
+
+import ori.math.vec2 as vec2
+import ori.game.entity as entity
+
+// ── Moving Platform ───────────────────────────────────────
+
+public struct MovingPlatform
+    path: list<vec2.Vec2>
+    speed: float = 50.0
+    current_idx: int = 0
+    next_idx: int = 1
+    paused: bool = false
+    pause_duration: float = 0.0
+    pause_timer: float = 0.0
+    carry_entities: bool = true
+    ping_pong: bool = true
+    loop: bool = false
+    direction: int = 1  // 1 = forward, -1 = backward
+end
+
+// ── Platform Functions ────────────────────────────────────
+
+public func create_platform(path: list<vec2.Vec2>, speed: float) -> MovingPlatform
+    if path.len() < 2
+        // Error: need at least 2 points
+        return MovingPlatform(path: path, speed: speed)
+    end
+
+    return MovingPlatform(
+        path: path,
+        speed: speed,
+        current_idx: 0,
+        next_idx: 1
+    )
+end
+
+public func tick_platform(p: MovingPlatform, dt: float) -> vec2.Vec2
+    if p.paused
+        p.pause_timer = p.pause_timer - dt
+        if p.pause_timer <= 0.0
+            p.paused = false
+        end
+        return p.path[p.current_idx]
+    end
+
+    if p.path.len() < 2
+        return p.path[0]
+    end
+
+    var current = p.path[p.current_idx]
+    var next = p.path[p.next_idx]
+
+    var dist = vec2.distance(current, next)
+    var travel_time = dist / p.speed
+
+    // Move towards next point
+    var t = dt / travel_time
+    if t > 1.0
+        t = 1.0
+    end
+
+    var new_pos = vec2.Vec2(
+        x: current.x + (next.x - current.x) * t,
+        y: current.y + (next.y - current.y) * t
+    )
+
+    // Check if reached next point
+    if vec2.distance(new_pos, next) < 1.0
+        p.current_idx = p.next_idx
+
+        // Determine next point
+        if p.ping_pong
+            p.next_idx = p.next_idx + p.direction
+            if p.next_idx >= p.path.len() or p.next_idx < 0
+                p.direction = -p.direction
+                p.next_idx = p.next_idx + p.direction * 2
+            end
+        else if p.loop
+            p.next_idx = (p.next_idx + 1) % p.path.len()
+        else
+            p.next_idx = p.next_idx + 1
+            if p.next_idx >= p.path.len()
+                p.next_idx = p.path.len() - 2
+                p.direction = -1
+            end
+        end
+
+        // Pause at waypoint
+        if p.pause_duration > 0.0
+            p.paused = true
+            p.pause_timer = p.pause_duration
+        end
+
+        return p.path[p.current_idx]
+    end
+
+    return new_pos
+end
+
+public func set_speed(p: MovingPlatform, speed: float) -> void
+    p.speed = speed
+end
+
+public func pause_platform(p: MovingPlatform) -> void
+    p.paused = true
+end
+
+public func resume_platform(p: MovingPlatform) -> void
+    p.paused = false
+end
+
+public func reverse_platform(p: MovingPlatform) -> void
+    p.direction = -p.direction
+    var temp = p.current_idx
+    p.current_idx = p.next_idx
+    p.next_idx = temp
+end

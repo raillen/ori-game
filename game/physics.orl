@@ -1,0 +1,146 @@
+namespace ori.game.physics
+
+import ori.math.vec2 as vec2
+
+// ── Physics Body ──────────────────────────────────────────
+
+public struct PhysicsBody
+    pos: vec2.Vec2
+    vel: vec2.Vec2 = vec2.Vec2(x: 0.0, y: 0.0)
+    mass: float = 1.0
+    friction: float = 0.1
+    bounciness: float = 0.0
+    is_static: bool = false
+    is_kinematic: bool = false
+end
+
+// ── Physics World ─────────────────────────────────────────
+
+public struct PhysicsWorld
+    bodies: list<PhysicsBody>
+    gravity: vec2.Vec2 = vec2.Vec2(x: 0.0, y: 980.0)
+    iterations: int = 4
+end
+
+public func create_world() -> PhysicsWorld
+    return PhysicsWorld(bodies: list<PhysicsBody>())
+end
+
+public func add_body(world: PhysicsWorld, body: PhysicsBody) -> void
+    world.bodies.add(body)
+end
+
+public func step_physics(world: PhysicsWorld, dt: float) -> void
+    // Apply gravity
+    for b in world.bodies
+        if not b.is_static and not b.is_kinematic
+            b.vel.x = b.vel.x + world.gravity.x * dt
+            b.vel.y = b.vel.y + world.gravity.y * dt
+        end
+    end
+
+    // Apply friction
+    for b in world.bodies
+        if not b.is_static
+            b.vel.x = b.vel.x * (1.0 - b.friction)
+            b.vel.y = b.vel.y * (1.0 - b.friction)
+        end
+    end
+
+    // Update positions
+    for b in world.bodies
+        if not b.is_static
+            b.pos.x = b.pos.x + b.vel.x * dt
+            b.pos.y = b.pos.y + b.vel.y * dt
+        end
+    end
+
+    // Simple collision resolution
+    for i in range(0, world.bodies.len())
+        for j in range(i + 1, world.bodies.len())
+            resolve_collision(world.bodies[i], world.bodies[j])
+        end
+    end
+end
+
+public func apply_force(body: PhysicsBody, force: vec2.Vec2) -> void
+    if not body.is_static
+        body.vel.x = body.vel.x + force.x / body.mass
+        body.vel.y = body.vel.y + force.y / body.mass
+    end
+end
+
+public func apply_impulse(body: PhysicsBody, impulse: vec2.Vec2) -> void
+    if not body.is_static
+        body.vel.x = body.vel.x + impulse.x
+        body.vel.y = body.vel.y + impulse.y
+    end
+end
+
+func resolve_collision(a: PhysicsBody, b: PhysicsBody) -> void
+    if a.is_static and b.is_static
+        return
+    end
+
+    // Simple AABB collision check
+    var size_a = 32.0 // Default size
+    var size_b = 32.0
+
+    var a_left = a.pos.x
+    var a_right = a.pos.x + size_a
+    var a_top = a.pos.y
+    var a_bottom = a.pos.y + size_a
+
+    var b_left = b.pos.x
+    var b_right = b.pos.x + size_b
+    var b_top = b.pos.y
+    var b_bottom = b.pos.y + size_b
+
+    // Check overlap
+    if a_right > b_left and a_left < b_right and a_bottom > b_top and a_top < b_bottom
+        // Calculate overlap
+        var overlap_x = math.min(a_right - b_left, b_right - a_left)
+        var overlap_y = math.min(a_bottom - b_top, b_bottom - a_top)
+
+        // Resolve on axis with smaller overlap
+        if overlap_x < overlap_y
+            if a.pos.x < b.pos.x
+                a.pos.x = a.pos.x - overlap_x / 2.0
+                b.pos.x = b.pos.x + overlap_x / 2.0
+            else
+                a.pos.x = a.pos.x + overlap_x / 2.0
+                b.pos.x = b.pos.x - overlap_x / 2.0
+            end
+
+            // Apply bounce
+            if not a.is_static and not b.is_static
+                var temp_vx = a.vel.x
+                a.vel.x = a.vel.x * a.bounciness
+                b.vel.x = b.vel.x * b.bounciness
+            else if not a.is_static
+                a.vel.x = -a.vel.x * a.bounciness
+            else if not b.is_static
+                b.vel.x = -b.vel.x * b.bounciness
+            end
+        else
+            if a.pos.y < b.pos.y
+                a.pos.y = a.pos.y - overlap_y / 2.0
+                b.pos.y = b.pos.y + overlap_y / 2.0
+            else
+                a.pos.y = a.pos.y + overlap_y / 2.0
+                b.pos.y = b.pos.y - overlap_y / 2.0
+            end
+
+            // Apply bounce
+            if not a.is_static and not b.is_static
+                var temp_vy = a.vel.y
+                a.vel.y = a.vel.y * a.bounciness
+                b.vel.y = b.vel.y * b.bounciness
+            else if not a.is_static
+                a.vel.y = -a.vel.y * a.bounciness
+            else if not b.is_static
+                b.vel.y = -b.vel.y * b.bounciness
+            end
+        end
+    end
+end

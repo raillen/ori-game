@@ -1,0 +1,159 @@
+namespace ori.game.engine
+
+import ori.math.vec2 as vec2
+
+// ── Timer ─────────────────────────────────────────────────
+
+public struct Timer
+    duration: float
+    elapsed: float = 0.0
+    active: bool = true
+    repeat: bool = false
+    on_complete: func() -> void
+end
+
+public func tick_timer(t: Timer, dt: float) -> void
+    if not t.active
+        return
+    end
+    t.elapsed = t.elapsed + dt
+    if t.elapsed >= t.duration
+        t.on_complete()
+        if t.repeat
+            t.elapsed = t.elapsed - t.duration
+        else
+            t.active = false
+        end
+    end
+end
+
+public func reset_timer(t: Timer) -> void
+    t.elapsed = 0.0
+    t.active = true
+end
+
+// ── Entity ────────────────────────────────────────────────
+
+public struct Entity
+    id: int
+    pos: vec2.Vec2
+    vel: vec2.Vec2 = vec2.Vec2(x: 0.0, y: 0.0)
+    alive: bool = true
+    has_gravity: bool = false
+    has_collision: bool = false
+
+    update_fn: func(Entity, float) -> void = nil
+    draw_fn: func(Entity) -> void = nil
+    on_hit_fn: func(Entity, Entity) -> void = nil
+    on_destroy_fn: func(Entity) -> void = nil
+end
+
+public func destroy(e: Entity) -> void
+    e.alive = false
+end
+
+// ── System ────────────────────────────────────────────────
+
+public struct System
+    name: string
+    run: func(list<Entity>, float) -> void
+    enabled: bool = true
+end
+
+// ── Engine ────────────────────────────────────────────────
+
+public struct Engine
+    available_systems: map<string, func(list<Entity>, float) -> void>
+    active_systems: list<string>
+    entities: list<Entity>
+    next_id: int = 0
+end
+
+public func create_engine() -> Engine
+    var eng = Engine(
+        available_systems: map<string, func(list<Entity>, float) -> void>(),
+        active_systems: list<string>(),
+        entities: list<Entity>()
+    )
+    // Register built-in systems
+    eng.register_system("gravity", gravity_system)
+    eng.register_system("movement", movement_system)
+    eng.register_system("cleanup", cleanup_system)
+    return eng
+end
+
+public func register_system(eng: Engine, name: string, func_ref: func(list<Entity>, float) -> void) -> void
+    eng.available_systems[name] = func_ref
+end
+
+public func enable_system(eng: Engine, name: string) -> void
+    if not eng.active_systems.has(name)
+        eng.active_systems.add(name)
+    end
+end
+
+public func disable_system(eng: Engine, name: string) -> void
+    eng.active_systems.remove(name)
+end
+
+public func spawn_entity(eng: Engine, pos: vec2.Vec2, update_fn: func(Entity, float) -> void, draw_fn: func(Entity) -> void) -> Entity
+    var e = Entity(
+        id: eng.next_id,
+        pos: pos,
+        update_fn: update_fn,
+        draw_fn: draw_fn
+    )
+    eng.next_id = eng.next_id + 1
+    eng.entities.add(e)
+    return e
+end
+
+public func tick(eng: Engine, dt: float) -> void
+    for name in eng.active_systems
+        if eng.available_systems.has(name)
+            eng.available_systems[name](eng.entities, dt)
+        end
+    end
+end
+
+public func draw_all(eng: Engine) -> void
+    for e in eng.entities
+        if e.alive and e.draw_fn != nil
+            e.draw_fn(e)
+        end
+    end
+end
+
+// ── Built-in Systems ──────────────────────────────────────
+
+func gravity_system(entities: list<Entity>, dt: float) -> void
+    for e in entities
+        if e.has_gravity
+            e.vel.y = e.vel.y + 980.0 * dt
+        end
+    end
+end
+
+func movement_system(entities: list<Entity>, dt: float) -> void
+    for e in entities
+        if e.alive
+            e.pos.x = e.pos.x + e.vel.x * dt
+            e.pos.y = e.pos.y + e.vel.y * dt
+        end
+    end
+end
+
+func cleanup_system(entities: list<Entity>, dt: float) -> void
+    // Note: actual removal happens in the game loop
+    // This system can be extended for death animations, etc.
+end
+
+public func cleanup_dead(eng: Engine) -> void
+    var alive = list<Entity>()
+    for e in eng.entities
+        if e.alive
+            alive.add(e)
+        end
+    end
+    eng.entities = alive
+end

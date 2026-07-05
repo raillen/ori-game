@@ -1,0 +1,125 @@
+namespace ori.game.mechanics.combat
+
+import ori.math.vec2 as vec2
+import ori.game.entity as entity
+import ori.game.timer as timer
+
+// ── Health System ─────────────────────────────────────────
+
+public struct Health
+    current: int
+    maximum: int
+    invincible: bool = false
+    invincible_timer: float = 0.0
+end
+
+public func take_damage(h: Health, amount: int) -> bool
+    if h.invincible
+        return false
+    end
+
+    h.current = h.current - amount
+    if h.current < 0
+        h.current = 0
+    end
+
+    return true
+end
+
+public func heal(h: Health, amount: int) -> void
+    h.current = h.current + amount
+    if h.current > h.maximum
+        h.current = h.maximum
+    end
+end
+
+public func is_alive(h: Health) -> bool
+    return h.current > 0
+end
+
+public func update_invincibility(h: Health, dt: float) -> void
+    if h.invincible
+        h.invincible_timer = h.invincible_timer - dt
+        if h.invincible_timer <= 0.0
+            h.invincible = false
+        end
+    end
+end
+
+public func set_invincible(h: Health, duration: float) -> void
+    h.invincible = true
+    h.invincible_timer = duration
+end
+
+// ── Knockback ─────────────────────────────────────────────
+
+public struct KnockbackConfig
+    force: float = 300.0
+    duration: float = 0.3
+    stun: float = 0.0
+end
+
+public func apply_knockback(e: Entity, dir: vec2.Vec2, config: KnockbackConfig) -> void
+    var normalized = vec2.normalize(dir)
+    e.vel.x = normalized.x * config.force
+    e.vel.y = normalized.y * config.force
+end
+
+// ── Knockdown ─────────────────────────────────────────────
+
+public struct KnockdownState
+    is_down: bool = false
+    timer: float = 0.0
+    recovery_time: float = 0.5
+end
+
+public func apply_knockdown(state: KnockdownState, duration: float) -> void
+    state.is_down = true
+    state.timer = duration
+end
+
+public func update_knockdown(state: KnockdownState, dt: float) -> void
+    if state.is_down
+        state.timer = state.timer - dt
+        if state.timer <= 0.0
+            state.is_down = false
+        end
+    end
+end
+
+public func is_knocked_down(state: KnockdownState) -> bool
+    return state.is_down
+end
+
+// ── Cooldown ──────────────────────────────────────────────
+
+public struct Cooldown
+    duration: float
+    remaining: float = 0.0
+    ready: bool = true
+end
+
+public func use_cooldown(c: Cooldown) -> bool
+    if not c.ready
+        return false
+    end
+
+    c.ready = false
+    c.remaining = c.duration
+    return true
+end
+
+public func tick_cooldown(c: Cooldown, dt: float) -> void
+    if not c.ready
+        c.remaining = c.remaining - dt
+        if c.remaining <= 0.0
+            c.ready = true
+            c.remaining = 0.0
+        end
+    end
+end
+
+public func reset_cooldown(c: Cooldown) -> void
+    c.ready = true
+    c.remaining = 0.0
+end

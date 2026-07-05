@@ -1,0 +1,93 @@
+namespace ori.game.save
+
+import ori.math.vec2 as vec2
+
+// ── Checkpoint ────────────────────────────────────────────
+
+public struct Checkpoint
+    pos: vec2.Vec2
+    id: string
+    activated: bool = false
+end
+
+// ── Save Data ─────────────────────────────────────────────
+
+public struct SaveData
+    player_pos: vec2.Vec2
+    health: int
+    score: int
+    level: int
+    inventory: list<string>
+    activated_checkpoints: list<string>
+    defeated_bosses: list<string>
+    timestamp: double = 0.0
+end
+
+// ── Save System ───────────────────────────────────────────
+
+public struct SaveSystem
+    checkpoints: list<Checkpoint>
+    last_checkpoint: Checkpoint = nil
+    save_slots: int = 3
+end
+
+// ── Save System Functions ─────────────────────────────────
+
+public func create_save_system() -> SaveSystem
+    return SaveSystem(
+        checkpoints: list<Checkpoint>(),
+        save_slots: 3
+    )
+end
+
+public func add_checkpoint(system: SaveSystem, cp: Checkpoint) -> void
+    system.checkpoints.add(cp)
+end
+
+public func activate_checkpoint(system: SaveSystem, cp_id: string) -> void
+    for cp in system.checkpoints
+        if cp.id == cp_id
+            cp.activated = true
+            system.last_checkpoint = cp
+            return
+        end
+    end
+end
+
+public func get_last_checkpoint(system: SaveSystem) -> optional<Checkpoint>
+    if system.last_checkpoint != nil
+        return system.last_checkpoint
+    end
+    return nil
+end
+
+public func respawn_position(system: SaveSystem) -> vec2.Vec2
+    if system.last_checkpoint != nil
+        return system.last_checkpoint.pos
+    end
+    return vec2.Vec2(x: 0.0, y: 0.0)
+end
+
+// ── Save/Load to JSON ─────────────────────────────────────
+
+public func save_game(data: SaveData, slot: int) -> bool
+    // Convert SaveData to JSON and write to file
+    // This is a placeholder - actual implementation depends on JSON support
+    return true
+end
+
+public func load_game(slot: int) -> optional<SaveData>
+    // Read JSON from file and convert to SaveData
+    // This is a placeholder - actual implementation depends on JSON support
+    return nil
+end
+
+public func delete_save(slot: int) -> bool
+    // Delete save file
+    return true
+end
+
+public func has_save(slot: int) -> bool
+    // Check if save file exists
+    return false
+end

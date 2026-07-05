@@ -1,0 +1,80 @@
+import ori.game as game
+import ori.game.engine as engine
+import ori.game.input as input
+import ori.game.draw as draw
+import ori.game.color as color
+import ori.game.shape as shape
+import ori.math.vec2 as vec2
+
+struct Player
+    pos: vec2.Vec2
+    vel: vec2.Vec2
+    speed: float = 200.0
+end
+
+var player: Player = nil
+var score: int = 0
+
+func init() -> void
+    player = Player(
+        pos: vec2.Vec2(x: 400.0, y: 300.0),
+        vel: vec2.Vec2(x: 0.0, y: 0.0)
+    )
+end
+
+func update(dt: float) -> void
+    -- Reset velocity
+    player.vel.x = 0.0
+    player.vel.y = 0.0
+
+    -- Movement with arrow keys
+    if input.key_down(39)  -- RIGHT
+        player.vel.x = player.speed
+    end
+    if input.key_down(37)  -- LEFT
+        player.vel.x = -player.speed
+    end
+    if input.key_down(40)  -- DOWN
+        player.vel.y = player.speed
+    end
+    if input.key_down(38)  -- UP
+        player.vel.y = -player.speed
+    end
+
+    -- Apply velocity
+    player.pos.x = player.pos.x + player.vel.x * dt
+    player.pos.y = player.pos.y + player.vel.y * dt
+
+    -- Wrap around screen
+    if player.pos.x < 0.0
+        player.pos.x = 800.0
+    end
+    if player.pos.x > 800.0
+        player.pos.x = 0.0
+    end
+    if player.pos.y < 0.0
+        player.pos.y = 600.0
+    end
+    if player.pos.y > 600.0
+        player.pos.y = 0.0
+    end
+
+    -- Score increases over time
+    score = score + 1
+end
+
+func draw_game() -> void
+    -- Draw player
+    draw.draw_circle(player.pos, 20.0, color.RED)
+
+    -- Draw score
+    draw.draw_text("Score: " + string(score), vec2.Vec2(x: 10.0, y: 10.0), 30, color.WHITE)
+
+    -- Draw instructions
+    draw.draw_text("Arrow keys to move", vec2.Vec2(x: 10.0, y: 50.0), 20, color.LIGHTGRAY)
+end
+
+func main()
+    init()
+    game.run_game("Hello Game", 800, 600, update, draw_game)
+end

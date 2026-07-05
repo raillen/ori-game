@@ -1,0 +1,43 @@
+namespace ori.game.timer
+
+// ── Timer ─────────────────────────────────────────────────
+
+public struct Timer
+    duration: float
+    elapsed: float = 0.0
+    active: bool = true
+    repeat: bool = false
+    on_complete: func() -> void
+end
+
+public func create_timer(duration: float, repeat: bool, on_complete: func() -> void) -> Timer
+    return Timer(
+        duration: duration,
+        repeat: repeat,
+        on_complete: on_complete
+    )
+end
+
+public func tick_timer(t: Timer, dt: float) -> void
+    if not t.active
+        return
+    end
+    t.elapsed = t.elapsed + dt
+    if t.elapsed >= t.duration
+        t.on_complete()
+        if t.repeat
+            t.elapsed = t.elapsed - t.duration
+        else
+            t.active = false
+        end
+    end
+end
+
+public func reset_timer(t: Timer) -> void
+    t.elapsed = 0.0
+    t.active = true
+end
+
+public func is_ready(t: Timer) -> bool
+    return not t.active or t.elapsed >= t.duration
+end

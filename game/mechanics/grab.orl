@@ -1,0 +1,116 @@
+namespace ori.game.mechanics.grab
+
+import ori.math.vec2 as vec2
+import ori.game.entity as entity
+
+// ── Grabbable ─────────────────────────────────────────────
+
+public struct Grabbable
+    is_grabbed: bool = false
+    grab_offset: vec2.Vec2 = vec2.Vec2(x: 0.0, y: 0.0)
+    weight: float = 1.0
+    max_pull_force: float = 500.0
+    friction: float = 0.8
+    throw_force: float = 300.0
+end
+
+// ── Grab State ────────────────────────────────────────────
+
+public struct GrabState
+    grabber: Entity = nil
+    target: Entity = nil
+    grab_distance: float = 50.0
+    is_grabbing: bool = false
+end
+
+// ── Grab Functions ────────────────────────────────────────
+
+public func can_grab(grabber: Entity, target: Entity, config: GrabState) -> bool
+    if config.is_grabbing
+        return false
+    end
+
+    var dist = vec2.distance(grabber.pos, target.pos)
+    return dist <= config.grab_distance
+end
+
+public func grab_object(grabber: Entity, target: Entity, state: GrabState, grabbable: Grabbable) -> void
+    if not can_grab(grabber, target, state)
+        return
+    end
+
+    state.grabber = grabber
+    state.target = target
+    state.is_grabbing = true
+    grabbable.is_grabbed = true
+
+    // Calculate offset
+    grabbable.grab_offset = vec2.Vec2(
+        x: target.pos.x - grabber.pos.x,
+        y: target.pos.y - grabber.pos.y
+    )
+end
+
+public func release_object(grabber: Entity, state: GrabState, grabbable: Grabbable) -> void
+    if not state.is_grabbing
+        return
+    end
+
+    state.is_grabbing = false
+    grabbable.is_grabbed = false
+    state.grabber = nil
+    state.target = nil
+end
+
+public func throw_object(grabber: Entity, state: GrabState, grabbable: Grabbable, direction: vec2.Vec2) -> void
+    if not state.is_grabbing or state.target == nil
+        return
+    end
+
+    var throw_dir = vec2.normalize(direction)
+    state.target.vel.x = throw_dir.x * grabbable.throw_force
+    state.target.vel.y = throw_dir.y * grabbable.throw_force
+
+    release_object(grabber, state, grabbable)
+end
+
+public func drag_object(grabber: Entity, state: GrabState, grabbable: Grabbable, dt: float) -> void
+    if not state.is_grabbing or state.target == nil
+        return
+    end
+
+    // Calculate desired position
+    var desired = vec2.Vec2(
+        x: grabber.pos.x + grabbable.grab_offset.x,
+        y: grabber.pos.y + grabbable.grab_offset.y
+    )
+
+    // Apply force to move target towards desired position
+    var diff = desired - state.target.pos
+    var force = vec2.Vec2(
+        x: diff.x * 10.0 * grabbable.friction,
+        y: diff.y * 10.0 * grabbable.friction
+    )
+
+    // Limit force by weight
+    var max_force = grabbable.max_pull_force / grabbable.weight
+    var force_mag = vec2.length(force)
+    if force_mag > max_force
+        force = vec2.normalize(force) * max_force
+    end
+
+    // Apply force
+    state.target.vel.x = state.target.vel.x + force.x * dt
+    state.target.vel.y = state.target.vel.y + force.y * dt
+end
+
+public func is_grabbing(state: GrabState) -> bool
+    return state.is_grabbing
+end
+
+public func get_grabbed_entity(state: GrabState) -> optional<Entity>
+    if state.is_grabbing and state.target != nil
+        return state.target
+    end
+    return nil
+end

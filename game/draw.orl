@@ -1,0 +1,40 @@
+namespace ori.game.draw
+
+import ori.math.vec2 as vec2
+import ori.game.shape as shape
+import ori.game.color as color
+
+// ── Drawing Helpers ───────────────────────────────────────
+
+public func draw_rect(rect: shape.Rectangle, c: color.Color) -> void
+    // Wrapper for rl.DrawRectangleRec
+end
+
+public func draw_rect_outline(rect: shape.Rectangle, c: color.Color, thickness: int) -> void
+    // Wrapper for rl.DrawRectangleLinesEx
+end
+
+public func draw_circle(center: vec2.Vec2, radius: float, c: color.Color) -> void
+    // Wrapper for rl.DrawCircleV
+end
+
+public func draw_circle_outline(center: vec2.Vec2, radius: float, c: color.Color) -> void
+    // Wrapper for rl.DrawCircleLines
+end
+
+public func draw_line(a: vec2.Vec2, b: vec2.Vec2, c: color.Color, thickness: float) -> void
+    // Wrapper for rl.DrawLineEx
+end
+
+public func draw_triangle(v1: vec2.Vec2, v2: vec2.Vec2, v3: vec2.Vec2, c: color.Color) -> void
+    // Wrapper for rl.DrawTriangle
+end
+
+public func draw_text(text: string, pos: vec2.Vec2, size: int, c: color.Color) -> void
+    // Wrapper for rl.DrawText
+end
+
+public func draw_text_centered(text: string, pos: vec2.Vec2, size: int, c: color.Color) -> void
+    // Calculate text width and center it
+    // Wrapper for rl.DrawTextEx with centering
+end

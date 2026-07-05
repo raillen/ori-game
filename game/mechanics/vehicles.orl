@@ -1,0 +1,109 @@
+namespace ori.game.mechanics.vehicles
+
+import ori.math.vec2 as vec2
+import ori.game.entity as entity
+
+// ── Vehicle Config ────────────────────────────────────────
+
+public struct VehicleConfig
+    max_speed: float = 200.0
+    acceleration: float = 100.0
+    friction: float = 0.9
+    turn_speed: float = 3.0
+    can_reverse: bool = false
+    reverse_speed: float = 100.0
+    drift_factor: float = 0.0
+end
+
+// ── Vehicle State ─────────────────────────────────────────
+
+public struct VehicleState
+    rotation: float = 0.0
+    speed: float = 0.0
+    driver: Entity = nil
+    occupied: bool = false
+end
+
+// ── Vehicle Functions ─────────────────────────────────────
+
+public func create_vehicle(config: VehicleConfig) -> VehicleState
+    return VehicleState()
+end
+
+public func enter_vehicle(vehicle: VehicleState, driver: Entity) -> bool
+    if vehicle.occupied
+        return false
+    end
+
+    vehicle.driver = driver
+    vehicle.occupied = true
+    return true
+end
+
+public func exit_vehicle(vehicle: VehicleState) -> void
+    if vehicle.driver != nil
+        // Position driver next to vehicle
+        vehicle.driver.pos.x = vehicle.driver.pos.x + 40.0
+    end
+
+    vehicle.driver = nil
+    vehicle.occupied = false
+    vehicle.speed = 0.0
+end
+
+public func drive_vehicle(vehicle: VehicleState, config: VehicleConfig, accel_input: float, turn_input: float, dt: float) -> void
+    if not vehicle.occupied
+        return
+    end
+
+    // Handle acceleration
+    if accel_input > 0.0
+        vehicle.speed = vehicle.speed + config.acceleration * accel_input * dt
+    else if accel_input < 0.0 and config.can_reverse
+        vehicle.speed = vehicle.speed - config.reverse_speed * math.abs(accel_input) * dt
+    else
+        // Apply friction
+        vehicle.speed = vehicle.speed * config.friction
+    end
+
+    // Clamp speed
+    if vehicle.speed > config.max_speed
+        vehicle.speed = config.max_speed
+    end
+    if vehicle.speed < -config.max_speed * 0.5
+        vehicle.speed = -config.max_speed * 0.5
+    end
+
+    // Handle turning
+    if math.abs(vehicle.speed) > 1.0
+        var turn_rate = config.turn_speed * (vehicle.speed / config.max_speed)
+        vehicle.rotation = vehicle.rotation + turn_input * turn_rate * dt
+    end
+
+    // Apply drift
+    if config.drift_factor > 0.0
+        // Drift reduces grip when turning fast
+        // Implementation depends on specific drift mechanics needed
+    end
+
+    // Update vehicle position
+    if vehicle.driver != nil
+        vehicle.driver.vel.x = math.cos(vehicle.rotation) * vehicle.speed
+        vehicle.driver.vel.y = math.sin(vehicle.rotation) * vehicle.speed
+    end
+end
+
+public func get_vehicle_forward(vehicle: VehicleState) -> vec2.Vec2
+    return vec2.Vec2(
+        x: math.cos(vehicle.rotation),
+        y: math.sin(vehicle.rotation)
+    )
+end
+
+public func get_vehicle_speed(vehicle: VehicleState) -> float
+    return math.abs(vehicle.speed)
+end
+
+public func is_vehicle_moving(vehicle: VehicleState) -> bool
+    return math.abs(vehicle.speed) > 1.0
+end

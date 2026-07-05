@@ -1,0 +1,163 @@
+namespace ori.game.particles
+
+import ori.math.vec2 as vec2
+import ori.game.color as color
+
+// ── Particle ──────────────────────────────────────────────
+
+public struct Particle
+    pos: vec2.Vec2
+    vel: vec2.Vec2
+    life: float
+    max_life: float
+    color_start: color.Color
+    color_end: color.Color
+    size_start: float
+    size_end: float
+    alpha: float = 1.0
+end
+
+// ── Particle Emitter ──────────────────────────────────────
+
+public struct ParticleEmitter
+    pos: vec2.Vec2
+    rate: float = 10.0
+    speed: float = 100.0
+    spread: float = 360.0
+    lifetime: float = 1.0
+    color_start: color.Color = color.RED
+    color_end: color.Color = color.YELLOW
+    size_start: float = 8.0
+    size_end: float = 0.0
+    gravity: float = 200.0
+    active: bool = true
+    emit_timer: float = 0.0
+end
+
+// ── Particle System ───────────────────────────────────────
+
+public struct ParticleSystem
+    particles: list<Particle>
+    emitters: list<ParticleEmitter>
+    max_particles: int = 1000
+end
+
+// ── Particle Functions ────────────────────────────────────
+
+public func create_particle_system(max_particles: int) -> ParticleSystem
+    return ParticleSystem(
+        particles: list<Particle>(),
+        emitters: list<ParticleEmitter>(),
+        max_particles: max_particles
+    )
+end
+
+public func add_emitter(system: ParticleSystem, emitter: ParticleEmitter) -> void
+    system.emitters.add(emitter)
+end
+
+public func remove_emitter(system: ParticleSystem, index: int) -> void
+    if index >= 0 and index < system.emitters.len()
+        system.emitters.remove(index)
+    end
+end
+
+public func emit(system: ParticleSystem, emitter: ParticleEmitter, count: int) -> void
+    for i in range(0, count)
+        if system.particles.len() >= system.max_particles
+            break
+        end
+
+        var angle = math.random(-emitter.spread / 2.0, emitter.spread / 2.0)
+        angle = angle * 3.14159265 / 180.0  // Convert to radians
+
+        var speed = math.random(0.0, emitter.speed)
+        var vel = vec2.Vec2(
+            x: math.cos(angle) * speed,
+            y: math.sin(angle) * speed
+        )
+
+        var p = Particle(
+            pos: vec2.Vec2(x: emitter.pos.x, y: emitter.pos.y),
+            vel: vel,
+            life: emitter.lifetime,
+            max_life: emitter.lifetime,
+            color_start: emitter.color_start,
+            color_end: emitter.color_end,
+            size_start: emitter.size_start,
+            size_end: emitter.size_end
+        )
+
+        system.particles.add(p)
+    end
+end
+
+public func emit_at(system: ParticleSystem, pos: vec2.Vec2, count: int, config: ParticleEmitter) -> void
+    var emitter = config
+    emitter.pos = pos
+    emit(system, emitter, count)
+end
+
+public func update_particles(system: ParticleSystem, dt: float) -> void
+    var i = 0
+    while i < system.particles.len()
+        var p = system.particles[i]
+
+        // Update life
+        p.life = p.life - dt
+        if p.life <= 0.0
+            system.particles.remove(i)
+            continue
+        end
+
+        // Update alpha
+        p.alpha = p.life / p.max_life
+
+        // Update size
+        var t = 1.0 - p.alpha
+        p.size_start = p.size_start + (p.size_end - p.size_start) * t
+
+        // Apply gravity
+        p.vel.y = p.vel.y + 200.0 * dt
+
+        // Update position
+        p.pos.x = p.pos.x + p.vel.x * dt
+        p.pos.y = p.pos.y + p.vel.y * dt
+
+        i = i + 1
+    end
+
+    // Update emitters
+    for e in system.emitters
+        if e.active
+            e.emit_timer = e.emit_timer + dt
+            var interval = 1.0 / e.rate
+            while e.emit_timer >= interval
+                emit(system, e, 1)
+                e.emit_timer = e.emit_timer - interval
+            end
+        end
+    end
+end
+
+public func draw_particles(system: ParticleSystem) -> void
+    for p in system.particles
+        var t = 1.0 - p.alpha
+        var r = p.color_start.r.int + (p.color_end.r.int - p.color_start.r.int) * t
+        var g = p.color_start.g.int + (p.color_end.g.int - p.color_start.g.int) * t
+        var b = p.color_start.b.int + (p.color_end.b.int - p.color_start.b.int) * t
+
+        var c = color.Color(r: r.u8, g: g.u8, b: b.u8, a: (p.alpha * 255.0).u8)
+
+        // Draw circle for particle
+        // Wrapper for rl.DrawCircleV
+    end
+end
+
+public func clear_particles(system: ParticleSystem) -> void
+    system.particles = list<Particle>()
+end
+
+public func particle_count(system: ParticleSystem) -> int
+    return system.particles.len()
+end

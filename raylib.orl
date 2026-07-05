@@ -1,0 +1,105 @@
+namespace ori.game.raylib
+
+// ── Window/Core ───────────────────────────────────────────
+
+extern "C" raylib
+    fn InitWindow(width: int, height: int, title: bytes) -> void
+    fn CloseWindow() -> void
+    fn WindowShouldClose() -> bool
+    fn SetTargetFPS(fps: int) -> void
+    fn GetFPS() -> int
+    fn GetFrameTime() -> float
+    fn GetTime() -> double
+    fn SetConfigFlags(flags: u32) -> void
+    fn ToggleFullscreen() -> void
+    fn GetScreenWidth() -> int
+    fn GetScreenHeight() -> int
+    fn SetExitKey(key: int) -> void
+end
+
+// ── Drawing ───────────────────────────────────────────────
+
+extern "C" raylib
+    fn BeginDrawing() -> void
+    fn EndDrawing() -> void
+    fn ClearBackground(color: Color) -> void
+    fn BeginMode2D(camera: Camera2D) -> void
+    fn EndMode2D() -> void
+end
+
+// ── Shapes ────────────────────────────────────────────────
+
+extern "C" raylib
+    fn DrawLineV(startPos: Vec2, endPos: Vec2, color: Color) -> void
+    fn DrawLineEx(startPos: Vec2, endPos: Vec2, thick: float, color: Color) -> void
+    fn DrawCircleV(center: Vec2, radius: float, color: Color) -> void
+    fn DrawCircleLinesV(center: Vec2, radius: float, color: Color) -> void
+    fn DrawRectangleRec(rec: Rectangle, color: Color) -> void
+    fn DrawRectangleLinesEx(rec: Rectangle, lineThick: int, color: Color) -> void
+    fn DrawTriangle(v1: Vec2, v2: Vec2, v3: Vec2, color: Color) -> void
+    fn DrawPoly(center: Vec2, sides: int, radius: float, rotation: float, color: Color) -> void
+end
+
+// ── Textures ──────────────────────────────────────────────
+
+extern "C" raylib
+    fn LoadTexture(fileName: bytes) -> Texture2D
+    fn UnloadTexture(texture: Texture2D) -> void
+    fn DrawTexture(texture: Texture2D, posX: int, posY: int, tint: Color) -> void
+    fn DrawTextureV(texture: Texture2D, position: Vec2, tint: Color) -> void
+    fn DrawTextureEx(texture: Texture2D, position: Vec2, rotation: float, scale: float, tint: Color) -> void
+    fn DrawTextureRec(texture: Texture2D, source: Rectangle, position: Vec2, tint: Color) -> void
+    fn DrawTexturePro(texture: Texture2D, source: Rectangle, dest: Rectangle, origin: Vec2, rotation: float, tint: Color) -> void
+    fn GetTextureWidth(texture: Texture2D) -> int
+    fn GetTextureHeight(texture: Texture2D) -> int
+end
+
+// ── Text ──────────────────────────────────────────────────
+
+extern "C" raylib
+    fn LoadFont(fileName: bytes) -> Font
+    fn UnloadFont(font: Font) -> void
+    fn DrawText(text: bytes, posX: int, posY: int, fontSize: int, color: Color) -> void
+    fn DrawTextEx(font: Font, text: bytes, position: Vec2, fontSize: float, spacing: float, tint: Color) -> void
+    fn MeasureText(text: bytes, fontSize: int) -> int
+    fn MeasureTextEx(font: Font, text: bytes, fontSize: float, spacing: float) -> Vec2
+    fn GetFontDefault() -> Font
+end
+
+// ── Input ─────────────────────────────────────────────────
+
+extern "C" raylib
+    fn IsKeyPressed(key: int) -> bool
+    fn IsKeyDown(key: int) -> bool
+    fn IsKeyReleased(key: int) -> bool
+    fn IsKeyUp(key: int) -> bool
+    fn GetKeyPressed() -> int
+    fn GetMousePosition() -> Vec2
+    fn GetMouseDelta() -> Vec2
+    fn IsMouseButtonPressed(button: int) -> bool
+    fn IsMouseButtonDown(button: int) -> bool
+    fn IsMouseButtonReleased(button: int) -> bool
+    fn GetMouseWheelMove() -> float
+    fn IsGamepadAvailable(gamepad: int) -> bool
+    fn IsGamepadButtonPressed(gamepad: int, button: int) -> bool
+    fn GetGamepadAxisMovement(gamepad: int, axis: int) -> float
+end
+
+// ── Audio ─────────────────────────────────────────────────
+
+extern "C" raylib
+    fn InitAudioDevice() -> void
+    fn CloseAudioDevice() -> void
+    fn LoadSound(fileName: bytes) -> Sound
+    fn UnloadSound(sound: Sound) -> void
+    fn PlaySound(sound: Sound) -> void
+    fn StopSound(sound: Sound) -> void
+    fn SetSoundVolume(sound: Sound, volume: float) -> void
+    fn LoadMusicStream(fileName: bytes) -> Music
+    fn UnloadMusicStream(music: Music) -> void
+    fn PlayMusicStream(music: Music) -> void
+    fn StopMusicStream(music: Music) -> void
+    fn UpdateMusicStream(music: Music) -> void
+    fn SetMusicVolume(music: Music, volume: float) -> void
+    fn IsMusicStreamPlaying(music: Music) -> bool
+end

@@ -1,0 +1,145 @@
+namespace ori.game.tilemap
+
+import ori.math.vec2 as vec2
+
+// ── Tileset ───────────────────────────────────────────────
+
+public struct Tileset
+    texture_path: string
+    tile_width: int
+    tile_height: int
+    columns: int
+end
+
+// ── Tile Layer ────────────────────────────────────────────
+
+public struct TileLayer
+    name: string
+    data: list<int>
+    visible: bool = true
+    opacity: float = 1.0
+end
+
+// ── Tile Map ──────────────────────────────────────────────
+
+public struct TileMap
+    width: int
+    height: int
+    tile_width: int
+    tile_height: int
+    layers: list<TileLayer>
+    collision_layer_index: int = 0
+end
+
+// ── Chunk (for large maps) ───────────────────────────────
+
+public struct Chunk
+    chunk_x: int
+    chunk_y: int
+    tiles: list<int>
+    collision: list<int>
+end
+
+public struct WorldMap
+    chunk_size: int = 16
+    tile_width: int
+    tile_height: int
+    tileset: Tileset
+    chunks: map<int, Chunk>
+    load_radius: int = 2
+end
+
+// ── Tile Map Functions ────────────────────────────────────
+
+public func get_tile(map: TileMap, x: int, y: int, layer: int) -> int
+    if x < 0 or x >= map.width or y < 0 or y >= map.height
+        return 0
+    end
+    if layer < 0 or layer >= map.layers.len()
+        return 0
+    end
+    return map.layers[layer].data[y * map.width + x]
+end
+
+public func set_tile(map: TileMap, x: int, y: int, layer: int, tile_id: int) -> void
+    if x < 0 or x >= map.width or y < 0 or y >= map.height
+        return
+    end
+    if layer < 0 or layer >= map.layers.len()
+        return
+    end
+    map.layers[layer].data[y * map.width + x] = tile_id
+end
+
+public func is_solid(map: TileMap, x: int, y: int) -> bool
+    var tile = get_tile(map, x, y, map.collision_layer_index)
+    return tile == 1  // 1 = solid
+end
+
+public func is_platform(map: TileMap, x: int, y: int) -> bool
+    var tile = get_tile(map, x, y, map.collision_layer_index)
+    return tile == 2  // 2 = platform
+end
+
+// ── Collision Resolution ──────────────────────────────────
+
+public func resolve_collision(map: TileMap, pos: vec2.Vec2, vel: vec2.Vec2, size: float) -> vec2.Vec2
+    var result = vec2.Vec2(x: pos.x, y: pos.y)
+
+    // X axis
+    var next_x = result.x + vel.x
+    var tile_x = int(next_x / map.tile_width.float)
+    var tile_y_start = int(result.y / map.tile_height.float)
+    var tile_y_end = int((result.y + size - 1.0) / map.tile_height.float)
+
+    var blocked_x = false
+    for ty in range(tile_y_start, tile_y_end + 1)
+        if is_solid(map, tile_x, ty)
+            blocked_x = true
+            break
+        end
+    end
+    if blocked_x
+        if vel.x > 0.0
+            result.x = float(tile_x * map.tile_width) - size
+        else
+            result.x = float((tile_x + 1) * map.tile_width)
+        end
+    else
+        result.x = next_x
+    end
+
+    // Y axis
+    var next_y = result.y + vel.y
+    var tile_x_start = int(result.x / map.tile_width.float)
+    var tile_x_end = int((result.x + size - 1.0) / map.tile_width.float)
+    var tile_y = int(next_y / map.tile_height.float)
+
+    var blocked_y = false
+    for tx in range(tile_x_start, tile_x_end + 1)
+        if is_solid(map, tx, tile_y)
+            blocked_y = true
+            break
+        end
+    end
+    if blocked_y
+        if vel.y > 0.0
+            result.y = float(tile_y * map.tile_height) - size
+        else
+            result.y = float((tile_y + 1) * map.tile_height)
+        end
+    else
+        result.y = next_y
+    end
+
+    return result
+end
+
+public func check_platform(map: TileMap, pos: vec2.Vec2, vel: vec2.Vec2, size: float) -> bool
+    if vel.y <= 0.0
+        return false
+    end
+    var tile_x = int((pos.x + size / 2.0) / map.tile_width.float)
+    var tile_y = int((pos.y + size + vel.y) / map.tile_height.float)
+    return is_platform(map, tile_x, tile_y)
+end

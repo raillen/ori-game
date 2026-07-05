@@ -1,0 +1,151 @@
+namespace ori.game.inventory
+
+import ori.game.texture as texture
+
+// ── Item ──────────────────────────────────────────────────
+
+public struct Item
+    id: string
+    name: string
+    description: string
+    icon: Texture2D = nil
+    stackable: bool = true
+    max_stack: int = 99
+    usable: bool = false
+    on_use: func() -> void = nil
+end
+
+// ── Inventory Slot ────────────────────────────────────────
+
+public struct InventorySlot
+    item: Item = nil
+    count: int = 0
+end
+
+// ── Inventory ─────────────────────────────────────────────
+
+public struct Inventory
+    slots: list<InventorySlot>
+    max_slots: int = 20
+end
+
+// ── Inventory Functions ───────────────────────────────────
+
+public func create_inventory(max_slots: int) -> Inventory
+    var slots = list<InventorySlot>()
+    for i in range(0, max_slots)
+        slots.add(InventorySlot())
+    end
+    return Inventory(slots: slots, max_slots: max_slots)
+end
+
+public func add_item(inv: Inventory, item: Item, count: int) -> bool
+    // Try to stack with existing item
+    if item.stackable
+        for i in range(0, inv.max_slots)
+            if inv.slots[i].item != nil and inv.slots[i].item.id == item.id
+                var can_add = math.min(count, item.max_stack - inv.slots[i].count)
+                if can_add > 0
+                    inv.slots[i].count = inv.slots[i].count + can_add
+                    count = count - can_add
+                    if count <= 0
+                        return true
+                    end
+                end
+            end
+        end
+    end
+
+    // Find empty slot
+    for i in range(0, inv.max_slots)
+        if inv.slots[i].item == nil
+            inv.slots[i].item = item
+            inv.slots[i].count = math.min(count, item.max_stack)
+            count = count - inv.slots[i].count
+            if count <= 0
+                return true
+            end
+        end
+    end
+
+    return false  // Inventory full
+end
+
+public func remove_item(inv: Inventory, item_id: string, count: int) -> bool
+    var remaining = count
+
+    for i in range(0, inv.max_slots)
+        if inv.slots[i].item != nil and inv.slots[i].item.id == item_id
+            var can_remove = math.min(remaining, inv.slots[i].count)
+            inv.slots[i].count = inv.slots[i].count - can_remove
+            remaining = remaining - can_remove
+
+            if inv.slots[i].count <= 0
+                inv.slots[i].item = nil
+                inv.slots[i].count = 0
+            end
+
+            if remaining <= 0
+                return true
+            end
+        end
+    end
+
+    return false  // Not enough items
+end
+
+public func has_item(inv: Inventory, item_id: string) -> bool
+    for i in range(0, inv.max_slots)
+        if inv.slots[i].item != nil and inv.slots[i].item.id == item_id
+            return true
+        end
+    end
+    return false
+end
+
+public func get_item_count(inv: Inventory, item_id: string) -> int
+    var total = 0
+    for i in range(0, inv.max_slots)
+        if inv.slots[i].item != nil and inv.slots[i].item.id == item_id
+            total = total + inv.slots[i].count
+        end
+    end
+    return total
+end
+
+public func use_item(inv: Inventory, slot: int) -> bool
+    if slot < 0 or slot >= inv.max_slots
+        return false
+    end
+
+    var s = inv.slots[slot]
+    if s.item == nil or not s.item.usable
+        return false
+    end
+
+    if s.item.on_use != nil
+        s.item.on_use()
+    end
+
+    s.count = s.count - 1
+    if s.count <= 0
+        s.item = nil
+        s.count = 0
+    end
+
+    return true
+end
+
+public func clear_inventory(inv: Inventory) -> void
+    for i in range(0, inv.max_slots)
+        inv.slots[i].item = nil
+        inv.slots[i].count = 0
+    end
+end
+
+public func get_slot(inv: Inventory, index: int) -> InventorySlot
+    if index < 0 or index >= inv.max_slots
+        return InventorySlot()
+    end
+    return inv.slots[index]
+end

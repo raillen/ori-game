@@ -1,0 +1,59 @@
+namespace ori.game.camera
+
+import ori.math.vec2 as vec2
+import ori.game.entity as entity
+
+// ── Camera ────────────────────────────────────────────────
+
+public struct Camera
+    pos: vec2.Vec2
+    zoom: float = 1.0
+    follow_target: Entity = nil
+    follow_speed: float = 5.0
+    shake_intensity: float = 0.0
+    shake_duration: float = 0.0
+    limits_min: vec2.Vec2 = nil
+    limits_max: vec2.Vec2 = nil
+end
+
+public func create_camera(pos: vec2.Vec2) -> Camera
+    return Camera(pos: pos)
+end
+
+public func update_camera(cam: Camera, dt: float) -> void
+    // Follow target with smooth interpolation
+    if cam.follow_target != nil
+        var target = cam.follow_target.pos
+        cam.pos.x = cam.pos.x + (target.x - cam.pos.x) * cam.follow_speed * dt
+        cam.pos.y = cam.pos.y + (target.y - cam.pos.y) * cam.follow_speed * dt
+    end
+
+    // Apply screen shake
+    if cam.shake_duration > 0.0
+        cam.shake_duration = cam.shake_duration - dt
+        var shake_x = (math.random(-1.0, 1.0) * cam.shake_intensity).float
+        var shake_y = (math.random(-1.0, 1.0) * cam.shake_intensity).float
+        cam.pos.x = cam.pos.x + shake_x
+        cam.pos.y = cam.pos.y + shake_y
+    end
+
+    // Apply limits
+    if cam.limits_min != nil and cam.limits_max != nil
+        cam.pos.x = math.clamp(cam.pos.x, cam.limits_min.x, cam.limits_max.x)
+        cam.pos.y = math.clamp(cam.pos.y, cam.limits_min.y, cam.limits_max.y)
+    end
+end
+
+public func camera_shake(cam: Camera, intensity: float, duration: float) -> void
+    cam.shake_intensity = intensity
+    cam.shake_duration = duration
+end
+
+public func set_limits(cam: Camera, min: vec2.Vec2, max: vec2.Vec2) -> void
+    cam.limits_min = min
+    cam.limits_max = max
+end
+
+public func follow(cam: Camera, target: Entity) -> void
+    cam.follow_target = target
+end

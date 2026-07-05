@@ -1,0 +1,90 @@
+namespace ori.game.mechanics.jumps
+
+import ori.math.vec2 as vec2
+import ori.game.entity as entity
+
+// ── Jump Configuration ────────────────────────────────────
+
+public struct JumpConfig
+    height: float = 200.0
+    gravity_mult: float = 1.0
+    coyote_time: float = 0.1
+    jump_buffer: float = 0.1
+    max_air_jumps: int = 0
+    variable_height: bool = true
+    allow_air_control: bool = true
+end
+
+// ── Jump State ────────────────────────────────────────────
+
+public struct JumpState
+    on_ground: bool = false
+    air_jumps_used: int = 0
+    coyote_timer: float = 0.0
+    jump_buffer_timer: float = 0.0
+    is_jumping: bool = false
+    jump_held: bool = false
+end
+
+// ── Functions ─────────────────────────────────────────────
+
+public func can_jump(state: JumpState, config: JumpConfig) -> bool
+    // Coyote time allows jumping shortly after leaving ground
+    if state.coyote_timer > 0.0
+        return true
+    end
+
+    // Air jumps (double jump, triple jump, etc.)
+    if state.air_jumps_used < config.max_air_jumps
+        return true
+    end
+
+    return false
+end
+
+public func apply_jump(e: Entity, state: JumpState, config: JumpConfig) -> void
+    if not can_jump(state, config)
+        return
+    end
+
+    // Calculate jump velocity from height
+    var jump_vel = -(2.0 * config.height).sqrt()
+
+    e.vel.y = jump_vel
+    state.is_jumping = true
+    state.jump_held = true
+
+    // Count air jump if not on ground
+    if not state.on_ground
+        state.air_jumps_used = state.air_jumps_used + 1
+    end
+
+    // Reset coyote time
+    state.coyote_timer = 0.0
+end
+
+public func update_jump_state(state: JumpState, config: JumpConfig, dt: float) -> void
+    // Update coyote time
+    if state.on_ground
+        state.coyote_timer = config.coyote_time
+        state.air_jumps_used = 0
+    else
+        state.coyote_timer = state.coyote_timer - dt
+    end
+
+    // Update jump buffer
+    state.jump_buffer_timer = state.jump_buffer_timer - dt
+end
+
+public func update_jump_velocity(e: Entity, config: JumpConfig, jump_held: bool, dt: float) -> void
+    // Variable height: cut jump short if button released
+    if config.variable_height and state.is_jumping and not jump_held
+        if e.vel.y < 0.0
+            e.vel.y = e.vel.y * 0.5
+        end
+        state.is_jumping = false
+    end
+
+    // Apply gravity multiplier
+    e.vel.y = e.vel.y + 980.0 * (config.gravity_mult - 1.0) * dt
+end

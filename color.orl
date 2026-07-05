@@ -1,0 +1,52 @@
+namespace ori.game.color
+
+public struct Color
+    r: u8
+    g: u8
+    b: u8
+    a: u8
+end
+
+public const RAYWHITE = Color(r: 245, g: 245, b: 245, a: 255)
+public const BLACK = Color(r: 0, g: 0, b: 0, a: 255)
+public const WHITE = Color(r: 255, g: 255, b: 255, a: 255)
+public const RED = Color(r: 230, g: 41, b: 55, a: 255)
+public const GREEN = Color(r: 0, g: 228, b: 48, a: 255)
+public const BLUE = Color(r: 0, g: 121, b: 241, a: 255)
+public const YELLOW = Color(r: 253, g: 249, b: 0, a: 255)
+public const ORANGE = Color(r: 255, g: 161, b: 0, a: 255)
+public const PURPLE = Color(r: 200, g: 122, b: 255, a: 255)
+public const PINK = Color(r: 255, g: 102, b: 194, a: 255)
+public const DARKGRAY = Color(r: 80, g: 80, b: 80, a: 255)
+public const LIGHTGRAY = Color(r: 200, g: 200, b: 200, a: 255)
+public const GRAY = Color(r: 130, g: 130, b: 130, a: 255)
+public const MAROON = Color(r: 190, g: 33, b: 55, a: 255)
+public const DARKGREEN = Color(r: 0, g: 117, b: 44, a: 255)
+public const DARKBLUE = Color(r: 0, g: 82, b: 172, a: 255)
+public const DARKPURPLE = Color(r: 112, g: 31, b: 126, a: 255)
+public const DARKBROWN = Color(r: 76, g: 63, b: 47, a: 255)
+
+public func from_rgb(r: int, g: int, b: int) -> Color
+    return Color(r: r.u8, g: g.u8, b: b.u8, a: 255)
+end
+
+public func from_rgba(r: int, g: int, b: int, a: int) -> Color
+    return Color(r: r.u8, g: g.u8, b: b.u8, a: a.u8)
+end
+
+public func from_hex(hex: int) -> Color
+    return Color(
+        r: ((hex >> 16) & 0xFF).u8,
+        g: ((hex >> 8) & 0xFF).u8,
+        b: (hex & 0xFF).u8,
+        a: 255
+    )
+end
+
+public func to_hex(c: Color) -> int
+    return (c.r.int << 16) | (c.g.int << 8) | c.b.int
+end
+
+public func fade(c: Color, alpha: float) -> Color
+    return Color(r: c.r, g: c.g, b: c.b, a: (alpha * 255.0).u8)
+end

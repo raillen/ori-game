@@ -1,0 +1,40 @@
+namespace ori.game.input
+
+import ori.math.vec2 as vec2
+
+// ── Keyboard ──────────────────────────────────────────────
+
+public func key_pressed(key: int) -> bool
+    // Wrapper for rl.IsKeyPressed
+    return false // placeholder
+end
+
+public func key_down(key: int) -> bool
+    return false // placeholder
+end
+
+public func key_released(key: int) -> bool
+    return false // placeholder
+end
+
+// ── Mouse ─────────────────────────────────────────────────
+
+public func mouse_pos() -> vec2.Vec2
+    return vec2.Vec2(x: 0.0, y: 0.0) // placeholder
+end
+
+public func mouse_delta() -> vec2.Vec2
+    return vec2.Vec2(x: 0.0, y: 0.0) // placeholder
+end
+
+public func mouse_pressed(button: int) -> bool
+    return false // placeholder
+end
+
+public func mouse_down(button: int) -> bool
+    return false // placeholder
+end
+
+public func mouse_released(button: int) -> bool
+    return false // placeholder
+end

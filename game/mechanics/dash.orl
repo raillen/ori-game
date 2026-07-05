@@ -1,0 +1,79 @@
+namespace ori.game.mechanics.dash
+
+import ori.math.vec2 as vec2
+import ori.game.entity as entity
+import ori.game.timer as timer
+
+// ── Dash Configuration ────────────────────────────────────
+
+public struct DashConfig
+    distance: float = 100.0
+    duration: float = 0.15
+    cooldown: float = 0.5
+    allow_air_dash: bool = true
+    direction_lock: bool = true
+end
+
+// ── Dash State ────────────────────────────────────────────
+
+public struct DashState
+    is_dashing: bool = false
+    dash_timer: float = 0.0
+    dash_dir: vec2.Vec2 = vec2.Vec2(x: 0.0, y: 0.0)
+    dash_speed: float = 0.0
+    cooldown_timer: timer.Timer = nil
+    can_dash: bool = true
+end
+
+// ── Functions ─────────────────────────────────────────────
+
+public func can_dash(state: DashState, config: DashConfig, on_ground: bool) -> bool
+    if state.is_dashing
+        return false
+    end
+    if not state.can_dash
+        return false
+    end
+    if not config.allow_air_dash and not on_ground
+        return false
+    end
+    return true
+end
+
+public func start_dash(e: Entity, state: DashState, config: DashConfig, dir: vec2.Vec2) -> void
+    if not can_dash(state, config, true)
+        return
+    end
+
+    state.is_dashing = true
+    state.dash_timer = config.duration
+    state.dash_dir = vec2.normalize(dir)
+    state.dash_speed = config.distance / config.duration
+    state.can_dash = false
+
+    // Set cooldown timer
+    state.cooldown_timer = timer.create_timer(config.cooldown, false, do() =>
+        state.can_dash = true
+    end)
+end
+
+public func update_dash(e: Entity, state: DashState, dt: float) -> void
+    if state.is_dashing
+        state.dash_timer = state.dash_timer - dt
+
+        // Apply dash movement
+        e.vel.x = state.dash_dir.x * state.dash_speed
+        e.vel.y = state.dash_dir.y * state.dash_speed
+
+        if state.dash_timer <= 0.0
+            state.is_dashing = false
+            e.vel.x = 0.0
+            e.vel.y = 0.0
+        end
+    end
+
+    // Update cooldown timer
+    if state.cooldown_timer != nil
+        timer.tick_timer(state.cooldown_timer, dt)
+    end
+end

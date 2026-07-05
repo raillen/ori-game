@@ -1,0 +1,100 @@
+namespace ori.game.mechanics.behavior_tree
+
+// ── BT Status ─────────────────────────────────────────────
+
+public enum BTStatus
+    Success
+    Failure
+    Running
+end
+
+// ── BT Node ───────────────────────────────────────────────
+
+public struct BTNode
+    name: string
+    run: func() -> BTStatus
+end
+
+// ── BT Composite Nodes ────────────────────────────────────
+
+public struct BTSequence
+    name: string
+    children: list<BTNode>
+    current_index: int = 0
+end
+
+public struct BTSelector
+    name: string
+    children: list<BTNode>
+    current_index: int = 0
+end
+
+public struct BTDecorator
+    name: string
+    child: BTNode
+    condition: func() -> bool
+end
+
+// ── Sequence: runs children in order, fails if any fails ──
+
+public func run_sequence(seq: BTSequence) -> BTStatus
+    while seq.current_index < seq.children.len()
+        var status = seq.children[seq.current_index].run()
+
+        match status
+            case BTStatus.Failure
+                seq.current_index = 0
+                return BTStatus.Failure
+            case BTStatus.Running
+                return BTStatus.Running
+            case BTStatus.Success
+                seq.current_index = seq.current_index + 1
+        end
+    end
+
+    seq.current_index = 0
+    return BTStatus.Success
+end
+
+// ── Selector: runs children until one succeeds ────────────
+
+public func run_selector(sel: BTSelector) -> BTStatus
+    while sel.current_index < sel.children.len()
+        var status = sel.children[sel.current_index].run()
+
+        match status
+            case BTStatus.Success
+                sel.current_index = 0
+                return BTStatus.Success
+            case BTStatus.Running
+                return BTStatus.Running
+            case BTStatus.Failure
+                sel.current_index = sel.current_index + 1
+        end
+    end
+
+    sel.current_index = 0
+    return BTStatus.Failure
+end
+
+// ── Decorator: condition check before child ───────────────
+
+public func run_decorator(dec: BTDecorator) -> BTStatus
+    if dec.condition()
+        return dec.child.run()
+    end
+    return BTStatus.Failure
+end
+
+// ── Behavior Tree ─────────────────────────────────────────
+
+public struct BehaviorTree
+    root: BTNode = nil
+end
+
+public func run_tree(tree: BehaviorTree) -> BTStatus
+    if tree.root == nil
+        return BTStatus.Failure
+    end
+    return tree.root.run()
+end

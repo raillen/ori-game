@@ -1,0 +1,116 @@
+namespace ori.game.audio
+
+// ── Audio Manager ─────────────────────────────────────────
+
+public struct AudioManager
+    master_volume: float = 1.0
+    music_volume: float = 0.7
+    sfx_volume: float = 1.0
+    current_music: Music = nil
+    fading: bool = false
+    fade_duration: float = 0.0
+    fade_timer: float = 0.0
+    fade_target: float = 0.0
+end
+
+// ── Audio Manager Functions ───────────────────────────────
+
+public func create_audio_manager() -> AudioManager
+    return AudioManager()
+end
+
+public func init_audio() -> void
+    // Wrapper for rl.InitAudioDevice
+end
+
+public func close_audio() -> void
+    // Wrapper for rl.CloseAudioDevice
+end
+
+public func play_sfx(mgr: AudioManager, sound: Sound) -> void
+    // Set volume and play
+    // Wrapper for rl.SetSoundVolume and rl.PlaySound
+end
+
+public func play_music(mgr: AudioManager, music: Music) -> void
+    // Stop current music if playing
+    if mgr.current_music != nil
+        // Wrapper for rl.StopMusicStream
+    end
+
+    mgr.current_music = music
+    // Set volume and play
+    // Wrapper for rl.SetMusicVolume and rl.PlayMusicStream
+end
+
+public func stop_music(mgr: AudioManager) -> void
+    if mgr.current_music != nil
+        // Wrapper for rl.StopMusicStream
+        mgr.current_music = nil
+    end
+end
+
+public func pause_music(mgr: AudioManager) -> void
+    // Wrapper for rl.PauseMusicStream
+end
+
+public func resume_music(mgr: AudioManager) -> void
+    // Wrapper for rl.ResumeMusicStream
+end
+
+public func set_master_volume(mgr: AudioManager, volume: float) -> void
+    mgr.master_volume = volume
+    // Apply to all active sounds
+end
+
+public func set_music_volume(mgr: AudioManager, volume: float) -> void
+    mgr.music_volume = volume
+    if mgr.current_music != nil
+        // Wrapper for rl.SetMusicVolume
+    end
+end
+
+public func set_sfx_volume(mgr: AudioManager, volume: float) -> void
+    mgr.sfx_volume = volume
+end
+
+public func fade_music(mgr: AudioManager, target_volume: float, duration: float) -> void
+    mgr.fading = true
+    mgr.fade_duration = duration
+    mgr.fade_timer = 0.0
+    mgr.fade_target = target_volume
+end
+
+public func update_audio(mgr: AudioManager, dt: float) -> void
+    // Update music stream
+    if mgr.current_music != nil
+        // Wrapper for rl.UpdateMusicStream
+    end
+
+    // Handle fading
+    if mgr.fading
+        mgr.fade_timer = mgr.fade_timer + dt
+        var t = mgr.fade_timer / mgr.fade_duration
+
+        if t >= 1.0
+            t = 1.0
+            mgr.fading = false
+        end
+
+        var current_vol = mgr.music_volume
+        var new_vol = current_vol + (mgr.fade_target - current_vol) * t
+        mgr.music_volume = new_vol
+
+        if mgr.current_music != nil
+            // Wrapper for rl.SetMusicVolume
+        end
+    end
+end
+
+public func is_music_playing(mgr: AudioManager) -> bool
+    if mgr.current_music != nil
+        // Wrapper for rl.IsMusicStreamPlaying
+        return true  // placeholder
+    end
+    return false
+end

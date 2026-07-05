@@ -1,0 +1,191 @@
+namespace ori.game.collision
+
+import ori.math.vec2 as vec2
+import ori.game.shape as shape
+
+// ── Point in Shape ────────────────────────────────────────
+
+public func point_in_rect(point: vec2.Vec2, rect: shape.Rectangle) -> bool
+    return point.x >= rect.x and point.x <= rect.x + rect.width
+       and point.y >= rect.y and point.y <= rect.y + rect.height
+end
+
+public func point_in_circle(point: vec2.Vec2, circle: shape.Circle) -> bool
+    var dx = point.x - circle.x
+    var dy = point.y - circle.y
+    return dx * dx + dy * dy <= circle.radius * circle.radius
+end
+
+public func point_in_triangle(point: vec2.Vec2, tri: shape.Triangle) -> bool
+    var d1 = sign_triangle(point, tri.x1, tri.y1, tri.x2, tri.y2)
+    var d2 = sign_triangle(point, tri.x2, tri.y2, tri.x3, tri.y3)
+    var d3 = sign_triangle(point, tri.x3, tri.y3, tri.x1, tri.y1)
+
+    var has_neg = (d1 < 0.0) or (d2 < 0.0) or (d3 < 0.0)
+    var has_pos = (d1 > 0.0) or (d2 > 0.0) or (d3 > 0.0)
+
+    return not (has_neg and has_pos)
+end
+
+func sign_triangle(p: vec2.Vec2, x1: float, y1: float, x2: float, y2: float) -> float
+    return (p.x - x2) * (y1 - y2) - (x1 - x2) * (p.y - y2)
+end
+
+// ── Rect vs Rect ──────────────────────────────────────────
+
+public func rects_collide(a: shape.Rectangle, b: shape.Rectangle) -> bool
+    return a.x < b.x + b.width
+       and a.x + a.width > b.x
+       and a.y < b.y + b.height
+       and a.y + a.height > b.y
+end
+
+// Returns: 0=no overlap, 1=A inside B, 2=partial overlap
+public func rect_in_rect(a: shape.Rectangle, b: shape.Rectangle) -> int
+    if not rects_collide(a, b)
+        return 0
+    end
+
+    var a_inside_b = a.x >= b.x and a.x + a.width <= b.x + b.width
+                  and a.y >= b.y and a.y + a.height <= b.y + b.height
+    if a_inside_b
+        return 1
+    end
+
+    return 2
+end
+
+// ── Circle vs Circle ──────────────────────────────────────
+
+public func circles_collide(a: shape.Circle, b: shape.Circle) -> bool
+    var dx = a.x - b.x
+    var dy = a.y - b.y
+    var dist = a.radius + b.radius
+    return dx * dx + dy * dy <= dist * dist
+end
+
+// ── Rect vs Circle ────────────────────────────────────────
+
+public func rect_circle_collide(rect: shape.Rectangle, circle: shape.Circle) -> bool
+    var closest_x = math.clamp(circle.x, rect.x, rect.x + rect.width)
+    var closest_y = math.clamp(circle.y, rect.y, rect.y + rect.height)
+
+    var dx = circle.x - closest_x
+    var dy = circle.y - closest_y
+
+    return dx * dx + dy * dy <= circle.radius * circle.radius
+end
+
+// ── Line vs Line ──────────────────────────────────────────
+
+public func lines_intersect(a: shape.Line, b: shape.Line) -> bool
+    var d1 = direction(a.x1, a.y1, a.x2, a.y2, b.x1, b.y1)
+    var d2 = direction(a.x1, a.y1, a.x2, a.y2, b.x2, b.y2)
+    var d3 = direction(b.x1, b.y1, b.x2, b.y2, a.x1, a.y1)
+    var d4 = direction(b.x1, b.y1, b.x2, b.y2, a.x2, a.y2)
+
+    if ((d1 > 0.0 and d2 < 0.0) or (d1 < 0.0 and d2 > 0.0)) and
+       ((d3 > 0.0 and d4 < 0.0) or (d3 < 0.0 and d4 > 0.0))
+        return true
+    end
+
+    if d1 == 0.0 and on_segment(a.x1, a.y1, b.x1, b.y1, a.x2, a.y2)
+        return true
+    end
+    if d2 == 0.0 and on_segment(a.x1, a.y1, b.x2, b.y2, a.x2, a.y2)
+        return true
+    end
+    if d3 == 0.0 and on_segment(b.x1, b.y1, a.x1, a.y1, b.x2, b.y2)
+        return true
+    end
+    if d4 == 0.0 and on_segment(b.x1, b.y1, a.x2, a.y2, b.x2, b.y2)
+        return true
+    end
+
+    return false
+end
+
+func direction(ax: float, ay: float, bx: float, by: float, cx: float, cy: float) -> float
+    return (cx - ax) * (by - ay) - (cy - ay) * (bx - ax)
+end
+
+func on_segment(px: float, py: float, qx: float, qy: float, rx: float, ry: float) -> bool
+    return math.min(px, rx) <= qx and qx <= math.max(px, rx)
+       and math.min(py, ry) <= qy and qy <= math.max(py, ry)
+end
+
+// ── Line vs Rect ──────────────────────────────────────────
+
+public func line_rect_intersect(line: shape.Line, rect: shape.Rectangle) -> bool
+    var left = shape.Line(x1: rect.x, y1: rect.y, x2: rect.x, y2: rect.y + rect.height)
+    var right = shape.Line(x1: rect.x + rect.width, y1: rect.y, x2: rect.x + rect.width, y2: rect.y + rect.height)
+    var top = shape.Line(x1: rect.x, y1: rect.y, x2: rect.x + rect.width, y2: rect.y)
+    var bottom = shape.Line(x1: rect.x, y1: rect.y + rect.height, x2: rect.x + rect.width, y2: rect.y + rect.height)
+
+    return lines_intersect(line, left) or lines_intersect(line, right)
+       or lines_intersect(line, top) or lines_intersect(line, bottom)
+       or point_in_rect(vec2.Vec2(x: line.x1, y: line.y1), rect)
+end
+
+// ── Polygon collision (SAT) ───────────────────────────────
+
+public func polygons_collide(a: list<vec2.Vec2>, b: list<vec2.Vec2>) -> bool
+    var axes = list<vec2.Vec2>()
+
+    for i in range(0, a.len())
+        var edge = a[(i + 1) % a.len()] - a[i]
+        axes.add(vec2.normalize(vec2.perpendicular(edge)))
+    end
+
+    for i in range(0, b.len())
+        var edge = b[(i + 1) % b.len()] - b[i]
+        axes.add(vec2.normalize(vec2.perpendicular(edge)))
+    end
+
+    for axis in axes
+        var min_a = vec2.dot(a[0], axis)
+        var max_a = min_a
+        for p in a
+            var proj = vec2.dot(p, axis)
+            if proj < min_a
+                min_a = proj
+            end
+            if proj > max_a
+                max_a = proj
+            end
+        end
+
+        var min_b = vec2.dot(b[0], axis)
+        var max_b = min_b
+        for p in b
+            var proj = vec2.dot(p, axis)
+            if proj < min_b
+                min_b = proj
+            end
+            if proj > max_b
+                max_b = proj
+            end
+        end
+
+        if max_a < min_b or max_b < min_a
+            return false
+        end
+    end
+
+    return true
+end
+
+public func point_in_polygon(point: vec2.Vec2, poly: list<vec2.Vec2>) -> bool
+    var inside = false
+    var j = poly.len() - 1
+    for i in range(0, poly.len())
+        var pi = poly[i]
+        var pj = poly[j]
+        if ((pi.y > point.y) != (pj.y > point.y)) and
+           (point.x < (pj.x - pi.x) * (point.y - pi.y) / (pj.y - pi.y) + pi.x)
+            inside = not inside
+        end
+        j = i
+    end
+    return inside
+end

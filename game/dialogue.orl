@@ -1,0 +1,189 @@
+namespace ori.game.dialogue
+
+import ori.game.timer as timer
+
+// ── Dialogue Line ─────────────────────────────────────────
+
+public struct DialogueLine
+    speaker: string
+    text: string
+    choices: list<DialogueChoice> = nil
+    auto_advance: bool = false
+    auto_advance_time: float = 2.0
+end
+
+// ── Dialogue Choice ───────────────────────────────────────
+
+public struct DialogueChoice
+    text: string
+    next_index: int
+    condition: func() -> bool = nil
+end
+
+// ── Dialogue State ────────────────────────────────────────
+
+public struct DialogueState
+    lines: list<DialogueLine>
+    current_index: int = 0
+    active: bool = false
+    char_index: int = 0
+    char_timer: float = 0.0
+    char_speed: float = 0.05
+    text_complete: bool = false
+    selected_choice: int = 0
+    on_complete: func() -> void = nil
+end
+
+// ── Dialogue Functions ────────────────────────────────────
+
+public func start_dialogue(state: DialogueState, lines: list<DialogueLine>) -> void
+    state.lines = lines
+    state.current_index = 0
+    state.active = true
+    state.char_index = 0
+    state.char_timer = 0.0
+    state.text_complete = false
+    state.selected_choice = 0
+end
+
+public func advance_dialogue(state: DialogueState) -> void
+    if not state.active
+        return
+    end
+
+    if not state.text_complete
+        // Skip to end of current text
+        state.char_index = state.lines[state.current_index].text.len()
+        state.text_complete = true
+        return
+    end
+
+    // Check if current line has choices
+    var current_line = state.lines[state.current_index]
+    if current_line.choices != nil
+        // Wait for choice selection
+        return
+    end
+
+    // Advance to next line
+    state.current_index = state.current_index + 1
+    state.char_index = 0
+    state.char_timer = 0.0
+    state.text_complete = false
+
+    // Check if dialogue is complete
+    if state.current_index >= state.lines.len()
+        state.active = false
+        if state.on_complete != nil
+            state.on_complete()
+        end
+    end
+end
+
+public func select_choice(state: DialogueState, index: int) -> void
+    if not state.active
+        return
+    end
+
+    var current_line = state.lines[state.current_index]
+    if current_line.choices == nil
+        return
+    end
+
+    if index < 0 or index >= current_line.choices.len()
+        return
+    end
+
+    var choice = current_line.choices[index]
+
+    // Check condition if exists
+    if choice.condition != nil and not choice.condition()
+        return
+    end
+
+    state.selected_choice = index
+
+    // Jump to specified line
+    state.current_index = choice.next_index
+    state.char_index = 0
+    state.char_timer = 0.0
+    state.text_complete = false
+
+    // Check if dialogue is complete
+    if state.current_index >= state.lines.len()
+        state.active = false
+        if state.on_complete != nil
+            state.on_complete()
+        end
+    end
+end
+
+public func update_dialogue(state: DialogueState, dt: float) -> void
+    if not state.active or state.text_complete
+        return
+    end
+
+    var current_line = state.lines[state.current_index]
+
+    // Auto-advance if enabled
+    if current_line.auto_advance
+        state.char_timer = state.char_timer + dt
+        if state.char_timer >= current_line.auto_advance_time
+            advance_dialogue(state)
+            return
+        end
+    end
+
+    // Typewriter effect
+    state.char_timer = state.char_timer + dt
+    if state.char_timer >= state.char_speed
+        state.char_timer = 0.0
+        state.char_index = state.char_index + 1
+
+        if state.char_index >= current_line.text.len()
+            state.char_index = current_line.text.len()
+            state.text_complete = true
+        end
+    end
+end
+
+public func get_display_text(state: DialogueState) -> string
+    if not state.active
+        return ""
+    end
+
+    var current_line = state.lines[state.current_index]
+    return current_line.text.substring(0, state.char_index)
+end
+
+public func get_current_speaker(state: DialogueState) -> string
+    if not state.active
+        return ""
+    end
+    return state.lines[state.current_index].speaker
+end
+
+public func has_choices(state: DialogueState) -> bool
+    if not state.active or not state.text_complete
+        return false
+    end
+    return state.lines[state.current_index].choices != nil
+end
+
+public func get_choices(state: DialogueState) -> list<DialogueChoice>
+    if not state.active
+        return list<DialogueChoice>()
+    end
+    var current_line = state.lines[state.current_index]
+    if current_line.choices == nil
+        return list<DialogueChoice>()
+    end
+    return current_line.choices
+end
+
+public func end_dialogue(state: DialogueState) -> void
+    state.active = false
+    if state.on_complete != nil
+        state.on_complete()
+    end
+end
