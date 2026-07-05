@@ -1,0 +1,59 @@
+import ori.game as game
+import ori.game.engine as engine
+import ori.game.input as input
+import ori.game.draw as draw
+import ori.game.color as color
+import ori.game.particles as particles
+import ori.math.vec2 as vec2
+
+var system: particles.ParticleSystem = nil
+var emitter: particles.ParticleEmitter = nil
+
+func init() -> void
+    system = particles.create_particle_system(500)
+
+    emitter = particles.ParticleEmitter(
+        pos: vec2.Vec2(x: 320.0, y: 240.0),
+        rate: 20.0,
+        speed: 150.0,
+        spread: 360.0,
+        lifetime: 2.0,
+        color_start: color.RED,
+        color_end: color.YELLOW,
+        size_start: 8.0,
+        size_end: 0.0,
+        gravity: 100.0
+    )
+end
+
+func update(dt: float) -> void
+    -- Move emitter with mouse
+    if input.mouse_down(0)
+        emitter.pos = input.mouse_pos()
+    end
+
+    -- Emit particles while mouse held
+    if input.mouse_down(0)
+        particles.emit(system, emitter, 3)
+    end
+
+    -- Update particles
+    particles.update_particles(system, dt)
+end
+
+func draw_game() -> void
+    -- Draw emitter
+    draw.draw_circle(emitter.pos, 5.0, color.WHITE)
+
+    -- Draw particles
+    particles.draw_particles(system)
+
+    -- Draw HUD
+    draw.draw_text("Click and drag to emit particles", vec2.Vec2(x: 10.0, y: 10.0), 20, color.WHITE)
+    draw.draw_text("Particles: " + string(particles.particle_count(system)), vec2.Vec2(x: 10.0, y: 40.0), 15, color.LIGHTGRAY)
+end
+
+func main()
+    init()
+    game.run_game("Particles Demo", 640, 480, update, draw_game)
+end

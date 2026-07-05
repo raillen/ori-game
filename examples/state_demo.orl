@@ -1,0 +1,107 @@
+import ori.game as game
+import ori.game.engine as engine
+import ori.game.input as input
+import ori.game.draw as draw
+import ori.game.color as color
+import ori.game.state_machine as sm
+import ori.math.vec2 as vec2
+
+struct Player
+    pos: vec2.Vec2
+    state_machine: sm.StateMachine
+end
+
+var player: Player = nil
+
+func init() -> void
+    player = Player(
+        pos: vec2.Vec2(x: 320.0, y: 240.0),
+        state_machine: sm.create_state_machine()
+    )
+
+    -- Add states
+    sm.add_state(player.state_machine, sm.State(
+        name: "idle",
+        on_enter = do() => io.print("Entering idle") end,
+        on_update = do(dt: float) => end,
+        on_exit = do() => io.print("Exiting idle") end
+    ))
+
+    sm.add_state(player.state_machine, sm.State(
+        name: "walking",
+        on_enter = do() => io.print("Entering walking") end,
+        on_update = do(dt: float) => end,
+        on_exit = do() => io.print("Exiting walking") end
+    ))
+
+    sm.add_state(player.state_machine, sm.State(
+        name: "jumping",
+        on_enter = do() => io.print("Entering jumping") end,
+        on_update = do(dt: float) => end,
+        on_exit = do() => io.print("Exiting jumping") end
+    ))
+
+    sm.change_state(player.state_machine, "idle")
+end
+
+func update(dt: float) -> void
+    var current = sm.get_current_state_name(player.state_machine)
+
+    -- State transitions
+    if current == "idle"
+        if input.key_down(37) or input.key_down(39) or input.key_down(38) or input.key_down(40)
+            sm.change_state(player.state_machine, "walking")
+        end
+    else if current == "walking"
+        if input.key_pressed(32)
+            sm.change_state(player.state_machine, "jumping")
+        else if not input.key_down(37) and not input.key_down(39) and not input.key_down(38) and not input.key_down(40)
+            sm.change_state(player.state_machine, "idle")
+        end
+    else if current == "jumping"
+        if player.pos.y >= 240.0
+            sm.change_state(player.state_machine, "idle")
+        end
+    end
+
+    -- Update state
+    sm.update_state(player.state_machine, dt)
+
+    -- Movement
+    if current == "walking" or current == "idle"
+        player.pos.x = player.pos.x + (input.key_down(39).float - input.key_down(37).float) * 150.0 * dt
+        player.pos.y = player.pos.y + (input.key_down(40).float - input.key_down(38).float) * 150.0 * dt
+    end
+
+    -- Jump
+    if current == "jumping"
+        player.pos.y = player.pos.y - 200.0 * dt
+    end
+
+    -- Clamp
+    player.pos.x = math.clamp(player.pos.x, 20.0, 620.0)
+    player.pos.y = math.clamp(player.pos.y, 20.0, 460.0)
+end
+
+func draw_game() -> void
+    -- Draw player
+    var current = sm.get_current_state_name(player.state_machine)
+    var player_color = color.GREEN
+    if current == "walking"
+        player_color = color.BLUE
+    else if current == "jumping"
+        player_color = color.YELLOW
+    end
+
+    draw.draw_circle(player.pos, 15.0, player_color)
+
+    -- Draw HUD
+    draw.draw_text("State: " + current, vec2.Vec2(x: 10.0, y: 10.0), 25, color.WHITE)
+    draw.draw_text("Arrows: Move | SPACE: Jump", vec2.Vec2(x: 10.0, y: 45.0), 15, color.LIGHTGRAY)
+    draw.draw_text("Green: Idle | Blue: Walking | Yellow: Jumping", vec2.Vec2(x: 10.0, y: 70.0), 15, color.LIGHTGRAY)
+end
+
+func main()
+    init()
+    game.run_game("State Machine Demo", 640, 480, update, draw_game)
+end

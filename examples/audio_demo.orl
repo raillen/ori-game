@@ -1,0 +1,58 @@
+import ori.game as game
+import ori.game.engine as engine
+import ori.game.input as input
+import ori.game.draw as draw
+import ori.game.color as color
+import ori.game.audio as audio
+import ori.math.vec2 as vec2
+
+var mgr: audio.AudioManager = nil
+
+func init() -> void
+    audio.init_audio()
+    mgr = audio.create_audio_manager()
+end
+
+func update(dt: float) -> void
+    -- Volume controls
+    if input.key_pressed(61)  -- + key
+        audio.set_master_volume(mgr, math.min(mgr.master_volume + 0.1, 1.0))
+        io.print("Volume: " + string(mgr.master_volume))
+    end
+    if input.key_pressed(45)  -- - key
+        audio.set_master_volume(mgr, math.max(mgr.master_volume - 0.1, 0.0))
+        io.print("Volume: " + string(mgr.master_volume))
+    end
+
+    -- Mute toggle
+    if input.key_pressed(77)  -- M key
+        if mgr.master_volume > 0.0
+            audio.set_master_volume(mgr, 0.0)
+            io.print("Muted")
+        else
+            audio.set_master_volume(mgr, 1.0)
+            io.print("Unmuted")
+        end
+    end
+end
+
+func draw_game() -> void
+    draw.draw_text("Audio Demo", vec2.Vec2(x: 250.0, y: 50.0), 40, color.WHITE)
+
+    draw.draw_text("+ / - : Volume Control", vec2.Vec2(x: 200.0, y: 150.0), 20, color.LIGHTGRAY)
+    draw.draw_text("M : Mute/Unmute", vec2.Vec2(x: 200.0, y: 200.0), 20, color.LIGHTGRAY)
+
+    draw.draw_text("Volume: " + string(mgr.master_volume), vec2.Vec2(x: 200.0, y: 300.0), 25, color.YELLOW)
+
+    if mgr.master_volume == 0.0
+        draw.draw_text("MUTED", vec2.Vec2(x: 280.0, y: 350.0), 30, color.RED)
+    else
+        draw.draw_text("UNMUTED", vec2.Vec2(x: 260.0, y: 350.0), 30, color.GREEN)
+    end
+end
+
+func main()
+    init()
+    game.run_game("Audio Demo", 640, 480, update, draw_game)
+    audio.close_audio()
+end
