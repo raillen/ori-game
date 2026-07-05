@@ -1,0 +1,171 @@
+import ori.game as game
+import ori.game.engine as engine
+import ori.game.input as input
+import ori.game.draw as draw
+import ori.game.color as color
+import ori.game.shape as shape
+import ori.game.collision as collision
+import ori.game.inventory as inventory
+import ori.math.vec2 as vec2
+
+struct Player
+    pos: vec2.Vec2
+    speed: float = 200.0
+    inv: inventory.Inventory
+end
+
+struct ItemPickup
+    pos: vec2.Vec2
+    item: inventory.Item
+    collected: bool = false
+end
+
+var player: Player = nil
+var pickups: list<ItemPickup> = []
+var show_inventory: bool = false
+
+func init() -> void
+    player = Player(
+        pos: vec2.Vec2(x: 320.0, y: 240.0),
+        inv: inventory.create_inventory(20)
+    )
+
+    -- Create some items
+    var sword = inventory.Item(
+        id: "sword",
+        name: "Iron Sword",
+        description: "A sharp iron sword",
+        stackable: false,
+        usable: true,
+        on_use = do() =>
+            io.print("Swing!")
+        end
+    )
+
+    var potion = inventory.Item(
+        id: "potion",
+        name: "Health Potion",
+        description: "Restores 50 HP",
+        stackable: true,
+        max_stack: 10,
+        usable: true,
+        on_use = do() =>
+            io.print("Drank potion!")
+        end
+    )
+
+    var coin = inventory.Item(
+        id: "coin",
+        name: "Gold Coin",
+        description: "Shiny gold coin",
+        stackable: true,
+        max_stack: 99,
+        usable: false
+    )
+
+    -- Add pickups
+    pickups.add(ItemPickup(pos: vec2.Vec2(x: 100.0, y: 100.0), item: sword))
+    pickups.add(ItemPickup(pos: vec2.Vec2(x: 200.0, y: 150.0), item: potion))
+    pickups.add(ItemPickup(pos: vec2.Vec2(x: 300.0, y: 100.0), item: potion))
+    pickups.add(ItemPickup(pos: vec2.Vec2(x: 400.0, y: 200.0), item: coin))
+    pickups.add(ItemPickup(pos: vec2.Vec2(x: 500.0, y: 150.0), item: coin))
+    pickups.add(ItemPickup(pos: vec2.Vec2(x: 150.0, y: 300.0), item: coin))
+end
+
+func update(dt: float) -> void
+    if show_inventory
+        -- Inventory input
+        if input.key_pressed(73)  -- I key
+            show_inventory = false
+        end
+
+        -- Use item with number keys
+        if input.key_pressed(49)  -- 1
+            inventory.use_item(player.inv, 0)
+        end
+        if input.key_pressed(50)  -- 2
+            inventory.use_item(player.inv, 1)
+        end
+    else
+        -- Player movement
+        player.pos.x = player.pos.x + (input.key_down(39).float - input.key_down(37).float) * player.speed * dt
+        player.pos.y = player.pos.y + (input.key_down(40).float - input.key_down(38).float) * player.speed * dt
+
+        -- Clamp to screen
+        player.pos.x = math.clamp(player.pos.x, 10.0, 630.0)
+        player.pos.y = math.clamp(player.pos.y, 10.0, 470.0)
+
+        -- Toggle inventory
+        if input.key_pressed(73)  -- I key
+            show_inventory = true
+        end
+
+        -- Pick up items
+        for p in pickups
+            if not p.collected
+                var dist = vec2.distance(player.pos, p.pos)
+                if dist < 30.0
+                    if inventory.add_item(player.inv, p.item, 1)
+                        p.collected = true
+                        io.print("Picked up " + p.item.name)
+                    end
+                end
+            end
+        end
+
+        -- Remove collected pickups
+        pickups = pickups.filter(do(p: ItemPickup) => not p.collected end)
+    end
+end
+
+func draw_game() -> void
+    -- Draw player
+    draw.draw_circle(player.pos, 12.0, color.GREEN)
+
+    -- Draw pickups
+    for p in pickups
+        if not p.collected
+            draw.draw_circle(p.pos, 8.0, color.YELLOW)
+        end
+    end
+
+    -- Draw HUD
+    draw.draw_text("Arrow keys: Move | I: Inventory | Walk over items to pick up", vec2.Vec2(x: 10.0, y: 10.0), 15, color.LIGHTGRAY)
+    draw.draw_text("Items: " + string(inventory.get_item_count(player.inv, "coin")) + " coins", vec2.Vec2(x: 10.0, y: 35.0), 15, color.WHITE)
+
+    -- Draw inventory
+    if show_inventory
+        -- Background
+        draw.draw_rect(shape.Rectangle(x: 100.0, y: 50.0, width: 440.0, height: 400.0), color.BLACK)
+
+        -- Title
+        draw.draw_text("Inventory", vec2.Vec2(x: 280.0, y: 60.0), 25, color.WHITE)
+
+        -- Slots
+        for i in range(0, 20)
+            var slot = inventory.get_slot(player.inv, i)
+            var x = 120.0 + (i % 5).float * 80.0
+            var y = 100.0 + (i / 5).float * 80.0
+
+            -- Slot background
+            draw.draw_rect(shape.Rectangle(x: x, y: y, width: 70.0, height: 70.0), color.DARKGRAY)
+
+            -- Item
+            if slot.item != nil
+                draw.draw_rect(shape.Rectangle(x: x + 5.0, y: y + 5.0, width: 60.0, height: 60.0), color.BLUE)
+                draw.draw_text(slot.item.name, vec2.Vec2(x: x + 5.0, y: y + 75.0), 10, color.WHITE)
+                if slot.count > 1
+                    draw.draw_text(string(slot.count), vec2.Vec2(x: x + 50.0, y: y + 50.0), 12, color.YELLOW)
+                end
+            end
+        end
+
+        -- Instructions
+        draw.draw_text("Press I to close | 1-2 to use items", vec2.Vec2(x: 150.0, y: 420.0), 15, color.LIGHTGRAY)
+    end
+end
+
+func main()
+    init()
+    game.run_game("Inventory Demo", 640, 480, update, draw_game)
+end

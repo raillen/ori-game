@@ -1,0 +1,134 @@
+import ori.game as game
+import ori.game.engine as engine
+import ori.game.input as input
+import ori.game.draw as draw
+import ori.game.color as color
+import ori.game.shape as shape
+import ori.game.collision as collision
+import ori.game.physics as physics
+import ori.math.vec2 as vec2
+
+struct Ball
+    body: physics.PhysicsBody
+    radius: float
+    color: color.Color
+end
+
+var world: physics.PhysicsWorld = nil
+var balls: list<Ball> = []
+var walls: list<shape.Rectangle> = []
+
+func init() -> void
+    world = physics.create_world()
+
+    -- Add floor
+    walls.add(shape.Rectangle(x: 0.0, y: 450.0, width: 640.0, height: 50.0))
+
+    -- Add walls
+    walls.add(shape.Rectangle(x: 0.0, y: 0.0, width: 10.0, height: 480.0))
+    walls.add(shape.Rectangle(x: 630.0, y: 0.0, width: 10.0, height: 480.0))
+
+    -- Spawn initial ball
+    spawn_ball(320.0, 100.0)
+end
+
+func spawn_ball(x: float, y: float) -> void
+    var body = physics.PhysicsBody(
+        pos: vec2.Vec2(x: x, y: y),
+        vel: vec2.Vec2(x: math.random(-100.0, 100.0), y: 0.0),
+        mass: 1.0,
+        friction: 0.01,
+        bounciness: 0.8
+    )
+    physics.add_body(world, body)
+
+    var ball_color = color.Color(
+        r: (math.random(50, 255)).u8,
+        g: (math.random(50, 255)).u8,
+        b: (math.random(50, 255)).u8,
+        a: 255
+    )
+
+    balls.add(Ball(
+        body: body,
+        radius: 10.0,
+        color: ball_color
+    ))
+end
+
+func update(dt: float) -> void
+    -- Spawn balls with space
+    if input.key_pressed(32)
+        spawn_ball(math.random(100.0, 540.0), 50.0)
+    end
+
+    -- Apply force to all balls with arrow keys
+    if input.key_down(37)
+        for b in balls
+            physics.apply_force(b.body, vec2.Vec2(x: -200.0, y: 0.0))
+        end
+    end
+    if input.key_down(39)
+        for b in balls
+            physics.apply_force(b.body, vec2.Vec2(x: 200.0, y: 0.0))
+        end
+    end
+    if input.key_pressed(38)
+        for b in balls
+            physics.apply_impulse(b.body, vec2.Vec2(x: 0.0, y: -300.0))
+        end
+    end
+
+    -- Update physics
+    physics.step_physics(world, dt)
+
+    -- Wall collisions
+    for b in balls
+        for wall in walls
+            if collision.rect_circle_collide(wall, shape.Circle(x: b.body.pos.x, y: b.body.pos.y, radius: b.radius))
+                -- Simple bounce
+                if b.body.pos.x < wall.x + wall.width / 2.0
+                    b.body.vel.x = -b.body.vel.x * b.body.bounciness
+                else
+                    b.body.vel.x = -b.body.vel.x * b.body.bounciness
+                end
+                if b.body.pos.y < wall.y + wall.height / 2.0
+                    b.body.vel.y = -b.body.vel.y * b.body.bounciness
+                else
+                    b.body.vel.y = -b.body.vel.y * b.body.bounciness
+                end
+            end
+        end
+    end
+
+    -- Remove balls that are too far
+    var i = 0
+    while i < balls.len()
+        if balls[i].body.pos.y > 600.0 or balls[i].body.pos.x < -50.0 or balls[i].body.pos.x > 700.0
+            balls.remove(i)
+        else
+            i = i + 1
+        end
+    end
+end
+
+func draw_game() -> void
+    -- Draw walls
+    for wall in walls
+        draw.draw_rect(wall, color.DARKGRAY)
+    end
+
+    -- Draw balls
+    for b in balls
+        draw.draw_circle(b.body.pos, b.radius, b.color)
+    end
+
+    -- Draw HUD
+    draw.draw_text("SPACE: Spawn ball | ARROWS: Apply force | UP: Jump", vec2.Vec2(x: 10.0, y: 10.0), 15, color.WHITE)
+    draw.draw_text("Balls: " + string(balls.len()), vec2.Vec2(x: 10.0, y: 35.0), 15, color.LIGHTGRAY)
+end
+
+func main()
+    init()
+    game.run_game("Physics Demo", 640, 480, update, draw_game)
+end

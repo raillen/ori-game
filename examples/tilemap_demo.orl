@@ -1,0 +1,120 @@
+import ori.game as game
+import ori.game.engine as engine
+import ori.game.input as input
+import ori.game.draw as draw
+import ori.game.color as color
+import ori.game.shape as shape
+import ori.game.collision as collision
+import ori.game.tilemap as tilemap
+import ori.math.vec2 as vec2
+
+struct Player
+    pos: vec2.Vec2
+    vel: vec2.Vec2
+    speed: float = 200.0
+    on_ground: bool = false
+end
+
+var player: Player = nil
+var world: tilemap.WorldMap = nil
+var tilemap_data: list<int> = []
+
+func init() -> void
+    player = Player(
+        pos: vec2.Vec2(x: 100.0, y: 200.0),
+        vel: vec2.Vec2(x: 0.0, y: 0.0)
+    )
+
+    -- Create simple tilemap (20x15 tiles, 32px each)
+    for i in range(0, 300)
+        tilemap_data.add(0)
+    end
+
+    -- Add ground (row 13 and 14)
+    for x in range(0, 20)
+        tilemap_data[13 * 20 + x] = 1
+        tilemap_data[14 * 20 + x] = 1
+    end
+
+    -- Add platforms
+    tilemap_data[10 * 20 + 5] = 1
+    tilemap_data[10 * 20 + 6] = 1
+    tilemap_data[10 * 20 + 7] = 1
+
+    tilemap_data[8 * 20 + 12] = 1
+    tilemap_data[8 * 20 + 13] = 1
+    tilemap_data[8 * 20 + 14] = 1
+
+    -- Add walls
+    for y in range(0, 15)
+        tilemap_data[y * 20 + 0] = 1
+        tilemap_data[y * 20 + 19] = 1
+    end
+end
+
+func update(dt: float) -> void
+    -- Movement
+    player.vel.x = 0.0
+    if input.key_down(37)
+        player.vel.x = -player.speed
+    end
+    if input.key_down(39)
+        player.vel.x = player.speed
+    end
+
+    -- Jump
+    if input.key_pressed(38) and player.on_ground
+        player.vel.y = -300.0
+        player.on_ground = false
+    end
+
+    -- Gravity
+    player.vel.y = player.vel.y + 800.0 * dt
+
+    -- Tilemap collision
+    var new_pos = tilemap.resolve_collision(
+        tilemap_data, 20, 15, 32, 32,
+        player.pos, player.vel * dt, 16.0
+    )
+
+    -- Check if on ground
+    var tile_x = int(new_pos.x / 32.0)
+    var tile_y = int((new_pos.y + 17.0) / 32.0)
+    if tile_x >= 0 and tile_x < 20 and tile_y >= 0 and tile_y < 15
+        if tilemap_data[tile_y * 20 + tile_x] == 1
+            player.on_ground = true
+            player.vel.y = 0.0
+        end
+    end
+
+    player.pos = new_pos
+end
+
+func draw_game() -> void
+    -- Draw tilemap
+    for y in range(0, 15)
+        for x in range(0, 20)
+            var tile_id = tilemap_data[y * 20 + x]
+            if tile_id == 1
+                var rect = shape.Rectangle(
+                    x: x.float * 32.0,
+                    y: y.float * 32.0,
+                    width: 32.0,
+                    height: 32.0
+                )
+                draw.draw_rect(rect, color.DARKGREEN)
+            end
+        end
+    end
+
+    -- Draw player
+    draw.draw_circle(player.pos, 8.0, color.RED)
+
+    -- Draw HUD
+    draw.draw_text("Arrow keys: Move | UP: Jump", vec2.Vec2(x: 10.0, y: 10.0), 20, color.WHITE)
+end
+
+func main()
+    init()
+    game.run_game("Tilemap Demo", 640, 480, update, draw_game)
+end
