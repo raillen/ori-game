@@ -1,0 +1,78 @@
+namespace app.simple_game
+
+import ori.math.vec2 as vec2
+import ori.io as io
+
+-- Shape structs
+struct Rectangle
+    x: float
+    y: float
+    width: float
+    height: float
+end
+
+-- Player struct
+struct Player
+    pos: vec2.Vec2
+    vel: vec2.Vec2
+    speed: float
+end
+
+-- Collision functions
+func rects_collide(a: Rectangle, b: Rectangle) -> bool
+    return a.x < b.x + b.width
+       and a.x + a.width > b.x
+       and a.y < b.y + b.height
+       and a.y + a.height > b.y
+end
+
+func point_in_rect(point: vec2.Vec2, rect: Rectangle) -> bool
+    return point.x >= rect.x and point.x <= rect.x + rect.width
+       and point.y >= rect.y and point.y <= rect.y + rect.height
+end
+
+-- Main game logic
+func main()
+    -- Create player
+    const player: Player = Player(
+        pos: vec2.Vec2(x: 100.0, y: 100.0),
+        vel: vec2.Vec2(x: 0.0, y: 0.0),
+        speed: 200.0
+    )
+
+    -- Create wall
+    const wall: Rectangle = Rectangle(x: 200.0, y: 150.0, width: 50.0, height: 100.0)
+
+    -- Simulate movement
+    const dt: float = 0.016
+    const new_pos: vec2.Vec2 = vec2.Vec2(
+        x: player.pos.x + player.speed * dt,
+        y: player.pos.y
+    )
+
+    -- Check collision
+    const player_rect: Rectangle = Rectangle(
+        x: new_pos.x,
+        y: new_pos.y,
+        width: 16.0,
+        height: 16.0
+    )
+
+    if rects_collide(player_rect, wall)
+        io.print("Collision detected!")
+    else
+        io.print("No collision")
+    end
+
+    -- Test point in rect
+    const test_point: vec2.Vec2 = vec2.Vec2(x: 220.0, y: 180.0)
+    if point_in_rect(test_point, wall)
+        io.print("Point is inside rect")
+    else
+        io.print("Point is outside rect")
+    end
+
+    -- Output results
+    io.print("Player position: " + string(new_pos.x) + ", " + string(new_pos.y))
+    io.print("Game logic working!")
+end
