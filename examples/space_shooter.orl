@@ -1,0 +1,181 @@
+import ori.game as game
+import ori.game.engine as engine
+import ori.game.input as input
+import ori.game.draw as draw
+import ori.game.color as color
+import ori.game.shape as shape
+import ori.game.collision as collision
+import ori.game.timer as timer
+import ori.game.mechanics.combat as combat
+import ori.math.vec2 as vec2
+
+struct Player
+    pos: vec2.Vec2
+    vel: vec2.Vec2
+    speed: float = 300.0
+    hp: combat.Health
+    shoot_cd: combat.Cooldown
+end
+
+struct Bullet
+    pos: vec2.Vec2
+    vel: vec2.Vec2
+    alive: bool = true
+end
+
+struct Enemy
+    pos: vec2.Vec2
+    vel: vec2.Vec2
+    hp: combat.Health
+    alive: bool = true
+end
+
+var player: Player = nil
+var bullets: list<Bullet> = []
+var enemies: list<Enemy> = []
+var score: int = 0
+var spawn_timer: float = 0.0
+
+func init() -> void
+    player = Player(
+        pos: vec2.Vec2(x: 400.0, y: 500.0),
+        vel: vec2.Vec2(x: 0.0, y: 0.0),
+        hp: combat.Health(current: 100, maximum: 100),
+        shoot_cd: combat.Cooldown(duration: 0.2)
+    )
+end
+
+func spawn_enemy() -> void
+    enemies.add(Enemy(
+        pos: vec2.Vec2(x: math.random(50.0, 750.0), y: -20.0),
+        vel: vec2.Vec2(x: 0.0, y: 100.0),
+        hp: combat.Health(current: 20, maximum: 20)
+    ))
+end
+
+func update(dt: float) -> void
+    -- Player movement
+    player.vel.x = 0.0
+    player.vel.y = 0.0
+    if input.key_down(37)
+        player.vel.x = -player.speed
+    end
+    if input.key_down(39)
+        player.vel.x = player.speed
+    end
+    if input.key_down(38)
+        player.vel.y = -player.speed
+    end
+    if input.key_down(40)
+        player.vel.y = player.speed
+    end
+
+    player.pos.x = player.pos.x + player.vel.x * dt
+    player.pos.y = player.pos.y + player.vel.y * dt
+
+    -- Clamp to screen
+    player.pos.x = math.clamp(player.pos.x, 20.0, 780.0)
+    player.pos.y = math.clamp(player.pos.y, 20.0, 580.0)
+
+    -- Shooting
+    if input.key_down(32) and combat.use_cooldown(player.shoot_cd)
+        bullets.add(Bullet(
+            pos: vec2.Vec2(x: player.pos.x, y: player.pos.y - 10.0),
+            vel: vec2.Vec2(x: 0.0, y: -500.0)
+        ))
+    end
+    combat.tick_cooldown(player.shoot_cd, dt)
+
+    -- Update bullets
+    var i = 0
+    while i < bullets.len()
+        bullets[i].pos.y = bullets[i].pos.y + bullets[i].vel.y * dt
+        if bullets[i].pos.y < -10.0
+            bullets[i].alive = false
+        end
+        i = i + 1
+    end
+
+    -- Update enemies
+    i = 0
+    while i < enemies.len()
+        enemies[i].pos.y = enemies[i].pos.y + enemies[i].vel.y * dt
+        if enemies[i].pos.y > 620.0
+            enemies[i].alive = false
+        end
+        i = i + 1
+    end
+
+    -- Collision: bullets vs enemies
+    i = 0
+    while i < bullets.len()
+        if bullets[i].alive
+            var j = 0
+            while j < enemies.len()
+                if enemies[j].alive
+                    var bullet_rect = shape.Rectangle(
+                        x: bullets[i].pos.x - 2.0,
+                        y: bullets[i].pos.y - 5.0,
+                        width: 4.0,
+                        height: 10.0
+                    )
+                    var enemy_rect = shape.Rectangle(
+                        x: enemies[j].pos.x - 15.0,
+                        y: enemies[j].pos.y - 15.0,
+                        width: 30.0,
+                        height: 30.0
+                    )
+                    if collision.rects_collide(bullet_rect, enemy_rect)
+                        bullets[i].alive = false
+                        combat.take_damage(enemies[j].hp, 10)
+                        if not combat.is_alive(enemies[j].hp)
+                            enemies[j].alive = false
+                            score = score + 100
+                        end
+                    end
+                end
+                j = j + 1
+            end
+        end
+        i = i + 1
+    end
+
+    -- Cleanup dead
+    bullets = bullets.filter(do(b: Bullet) => b.alive end)
+    enemies = enemies.filter(do(e: Enemy) => e.alive end)
+
+    -- Spawn enemies
+    spawn_timer = spawn_timer + dt
+    if spawn_timer >= 1.0
+        spawn_timer = 0.0
+        spawn_enemy()
+    end
+
+    -- Update cooldowns
+    combat.update_invincibility(player.hp, dt)
+end
+
+func draw_game() -> void
+    -- Draw player
+    draw.draw_circle(player.pos, 15.0, color.GREEN)
+
+    -- Draw bullets
+    for b in bullets
+        draw.draw_circle(b.pos, 3.0, color.YELLOW)
+    end
+
+    -- Draw enemies
+    for e in enemies
+        draw.draw_circle(e.pos, 15.0, color.RED)
+    end
+
+    -- Draw HUD
+    draw.draw_text("Score: " + string(score), vec2.Vec2(x: 10.0, y: 10.0), 20, color.WHITE)
+    draw.draw_text("HP: " + string(player.hp.current), vec2.Vec2(x: 10.0, y: 40.0), 20, color.GREEN)
+    draw.draw_text("Arrows: Move | Space: Shoot", vec2.Vec2(x: 10.0, y: 570.0), 15, color.LIGHTGRAY)
+end
+
+func main()
+    init()
+    game.run_game("Space Shooter", 800, 600, update, draw_game)
+end

@@ -1,0 +1,103 @@
+import ori.game as game
+import ori.game.engine as engine
+import ori.game.input as input
+import ori.game.draw as draw
+import ori.game.color as color
+import ori.game.shape as shape
+import ori.game.collision as collision
+import ori.game.mechanics.ai as ai
+import ori.math.vec2 as vec2
+
+struct Player
+    pos: vec2.Vec2
+    speed: float = 200.0
+end
+
+struct Enemy
+    pos: vec2.Vec2
+    speed: float = 100.0
+    patrol: ai.PatrolState
+    state: string = "patrol"
+end
+
+var player: Player = nil
+var enemies: list<Enemy> = []
+var detection_range: float = 200.0
+
+func init() -> void
+    player = Player(pos: vec2.Vec2(x: 400.0, y: 300.0))
+
+    -- Create patrol enemy
+    var patrol_points = list<vec2.Vec2>()
+    patrol_points.add(vec2.Vec2(x: 100.0, y: 100.0))
+    patrol_points.add(vec2.Vec2(x: 300.0, y: 100.0))
+    patrol_points.add(vec2.Vec2(x: 300.0, y: 300.0))
+    patrol_points.add(vec2.Vec2(x: 100.0, y: 300.0))
+
+    enemies.add(Enemy(
+        pos: vec2.Vec2(x: 100.0, y: 100.0),
+        patrol: ai.PatrolState(points: patrol_points, speed: 80.0)
+    ))
+
+    -- Create chase enemy
+    var chase_points = list<vec2.Vec2>()
+    chase_points.add(vec2.Vec2(x: 600.0, y: 100.0))
+    chase_points.add(vec2.Vec2(x: 700.0, y: 100.0))
+
+    enemies.add(Enemy(
+        pos: vec2.Vec2(x: 600.0, y: 100.0),
+        patrol: ai.PatrolState(points: chase_points, speed: 60.0)
+    ))
+end
+
+func update(dt: float) -> void
+    -- Player movement
+    player.pos.x = player.pos.x + (input.key_down(39).float - input.key_down(37).float) * player.speed * dt
+    player.pos.y = player.pos.y + (input.key_down(40).float - input.key_down(38).float) * player.speed * dt
+
+    -- Clamp to screen
+    player.pos.x = math.clamp(player.pos.x, 10.0, 790.0)
+    player.pos.y = math.clamp(player.pos.y, 10.0, 590.0)
+
+    -- Update enemies
+    for e in enemies
+        var dist = ai.distance_to(e, player.pos)
+
+        if dist < detection_range
+            -- Chase player
+            e.state = "chase"
+            ai.update_chase(e, player.pos, e.speed, dt)
+        else
+            -- Patrol
+            e.state = "patrol"
+            ai.update_patrol(e, e.patrol, dt)
+        end
+    end
+end
+
+func draw_game() -> void
+    -- Draw player
+    draw.draw_circle(player.pos, 12.0, color.GREEN)
+
+    -- Draw enemies
+    for e in enemies
+        if e.state == "chase"
+            draw.draw_circle(e.pos, 12.0, color.RED)
+        else
+            draw.draw_circle(e.pos, 12.0, color.BLUE)
+        end
+    end
+
+    -- Draw detection range
+    draw.draw_circle_outline(player.pos, detection_range, color.YELLOW)
+
+    -- Draw HUD
+    draw.draw_text("Arrow keys: Move", vec2.Vec2(x: 10.0, y: 10.0), 20, color.WHITE)
+    draw.draw_text("Blue: Patrol | Red: Chase", vec2.Vec2(x: 10.0, y: 40.0), 15, color.LIGHTGRAY)
+    draw.draw_text("Yellow circle: Detection range", vec2.Vec2(x: 10.0, y: 65.0), 15, color.LIGHTGRAY)
+end
+
+func main()
+    init()
+    game.run_game("AI Demo", 800, 600, update, draw_game)
+end
