@@ -1,0 +1,13 @@
+This is a placeholder for the raylib static library.
+
+To build raylib for Linux:
+1. Download raylib source from https://github.com/raysan5/raylib
+2. Install dependencies: sudo apt-get install libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev
+3. Build: make PLATFORM=PLATFORM_DESKTOP
+4. Copy src/libraylib.a to this directory
+
+Or use CMake:
+mkdir build && cd build
+cmake -DCMAKE_BUILD_TYPE=Release ..
+make
+cp src/libraylib.a ..

@@ -3,13 +3,30 @@ name = "ori-game"
 version = "0.1.0"
 description = "Game engine and raylib bindings for Ori language"
 authors = ["Ori Team"]
+license = "MIT"
+repository = "https://github.com/raillen/ori-game"
 
 [dependencies]
 ori = "0.2.0"
 
 [native_libs]
 # Platform-specific raylib static libraries
-# These will be vendored in the lib/ directory
-# x86_64-pc-windows-msvc/raylib.lib
-# x86_64-unknown-linux-gnu/libraylib.a
-# x86_64-apple-darwin/libraylib.a
+# These are vendored in the lib/ directory
+x86_64-pc-windows-msvc = "lib/x86_64-pc-windows-msvc/raylib.lib"
+x86_64-unknown-linux-gnu = "lib/x86_64-unknown-linux-gnu/libraylib.a"
+x86_64-apple-darwin = "lib/x86_64-apple-darwin/libraylib.a"
+
+[metadata]
+description = """
+Game engine and raylib bindings for the Ori programming language.
+
+Features:
+- 2D game engine with Entity-Component-System architecture
+- Raylib bindings for window management, input, rendering, and audio
+- Collision detection (primitives + SAT for polygons)
+- Tilemap support with chunks for large worlds
+- Configurable gameplay mechanics (jumps, dashes, AI, physics)
+- Timer system for cooldowns and delays
+- Camera system with follow, shake, and limits
+- Dialogue, inventory, particle, and save/load systems
+"""

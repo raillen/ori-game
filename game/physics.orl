@@ -7,11 +7,13 @@ import ori.math.vec2 as vec2
 public struct PhysicsBody
     pos: vec2.Vec2
     vel: vec2.Vec2 = vec2.Vec2(x: 0.0, y: 0.0)
+    accel: vec2.Vec2 = vec2.Vec2(x: 0.0, y: 0.0)
     mass: float = 1.0
     friction: float = 0.1
     bounciness: float = 0.0
     is_static: bool = false
     is_kinematic: bool = false
+    max_speed: float = 1000.0
 end
 
 // ── Physics World ─────────────────────────────────────────
@@ -20,14 +22,37 @@ public struct PhysicsWorld
     bodies: list<PhysicsBody>
     gravity: vec2.Vec2 = vec2.Vec2(x: 0.0, y: 980.0)
     iterations: int = 4
+    bounds: vec2.Vec2 = vec2.Vec2(x: 800.0, y: 600.0)
 end
 
 public func create_world() -> PhysicsWorld
     return PhysicsWorld(bodies: list<PhysicsBody>())
 end
 
-public func add_body(world: PhysicsWorld, body: PhysicsBody) -> void
+public func create_world_with_bounds(width: float, height: float) -> PhysicsWorld
+    return PhysicsWorld(
+        bodies: list<PhysicsBody>(),
+        bounds: vec2.Vec2(x: width, y: height)
+    )
+end
+
+public func add_body(world: PhysicsWorld, body: PhysicsBody) -> int
     world.bodies.add(body)
+    return world.bodies.len() - 1
+end
+
+public func remove_body(world: PhysicsWorld, index: int) -> void
+    if index >= 0 and index < world.bodies.len()
+        world.bodies.remove(index)
+    end
+end
+
+public func get_body(world: PhysicsWorld, index: int) -> PhysicsBody
+    return world.bodies[index]
+end
+
+public func body_count(world: PhysicsWorld) -> int
+    return world.bodies.len()
 end
 
 public func step_physics(world: PhysicsWorld, dt: float) -> void
@@ -39,11 +64,29 @@ public func step_physics(world: PhysicsWorld, dt: float) -> void
         end
     end
 
+    // Apply acceleration
+    for b in world.bodies
+        if not b.is_static
+            b.vel.x = b.vel.x + b.accel.x * dt
+            b.vel.y = b.vel.y + b.accel.y * dt
+        end
+    end
+
     // Apply friction
     for b in world.bodies
         if not b.is_static
             b.vel.x = b.vel.x * (1.0 - b.friction)
             b.vel.y = b.vel.y * (1.0 - b.friction)
+        end
+    end
+
+    // Clamp speed
+    for b in world.bodies
+        if not b.is_static
+            var speed = vec2.length(b.vel)
+            if speed > b.max_speed
+                b.vel = vec2.normalize(b.vel) * b.max_speed
+            end
         end
     end
 
@@ -55,7 +98,33 @@ public func step_physics(world: PhysicsWorld, dt: float) -> void
         end
     end
 
-    // Simple collision resolution
+    // Boundary collision
+    for b in world.bodies
+        if not b.is_static
+            // Bottom
+            if b.pos.y > world.bounds.y
+                b.pos.y = world.bounds.y
+                b.vel.y = -b.vel.y * b.bounciness
+            end
+            // Top
+            if b.pos.y < 0.0
+                b.pos.y = 0.0
+                b.vel.y = -b.vel.y * b.bounciness
+            end
+            // Right
+            if b.pos.x > world.bounds.x
+                b.pos.x = world.bounds.x
+                b.vel.x = -b.vel.x * b.bounciness
+            end
+            // Left
+            if b.pos.x < 0.0
+                b.pos.x = 0.0
+                b.vel.x = -b.vel.x * b.bounciness
+            end
+        end
+    end
+
+    // Simple body-body collision
     for i in range(0, world.bodies.len())
         for j in range(i + 1, world.bodies.len())
             resolve_collision(world.bodies[i], world.bodies[j])
@@ -77,14 +146,26 @@ public func apply_impulse(body: PhysicsBody, impulse: vec2.Vec2) -> void
     end
 end
 
+public func set_velocity(body: PhysicsBody, vel: vec2.Vec2) -> void
+    body.vel = vel
+end
+
+public func get_speed(body: PhysicsBody) -> float
+    return vec2.length(body.vel)
+end
+
+public func is_moving(body: PhysicsBody) -> bool
+    return vec2.length(body.vel) > 0.1
+end
+
 func resolve_collision(a: PhysicsBody, b: PhysicsBody) -> void
     if a.is_static and b.is_static
         return
     end
 
     // Simple AABB collision check
-    var size_a = 32.0 // Default size
-    var size_b = 32.0
+    var size_a = 16.0
+    var size_b = 16.0
 
     var a_left = a.pos.x
     var a_right = a.pos.x + size_a
@@ -105,11 +186,19 @@ func resolve_collision(a: PhysicsBody, b: PhysicsBody) -> void
         // Resolve on axis with smaller overlap
         if overlap_x < overlap_y
             if a.pos.x < b.pos.x
-                a.pos.x = a.pos.x - overlap_x / 2.0
-                b.pos.x = b.pos.x + overlap_x / 2.0
+                if not a.is_static
+                    a.pos.x = a.pos.x - overlap_x / 2.0
+                end
+                if not b.is_static
+                    b.pos.x = b.pos.x + overlap_x / 2.0
+                end
             else
-                a.pos.x = a.pos.x + overlap_x / 2.0
-                b.pos.x = b.pos.x - overlap_x / 2.0
+                if not a.is_static
+                    a.pos.x = a.pos.x + overlap_x / 2.0
+                end
+                if not b.is_static
+                    b.pos.x = b.pos.x - overlap_x / 2.0
+                end
             end
 
             // Apply bounce
@@ -124,11 +213,19 @@ func resolve_collision(a: PhysicsBody, b: PhysicsBody) -> void
             end
         else
             if a.pos.y < b.pos.y
-                a.pos.y = a.pos.y - overlap_y / 2.0
-                b.pos.y = b.pos.y + overlap_y / 2.0
+                if not a.is_static
+                    a.pos.y = a.pos.y - overlap_y / 2.0
+                end
+                if not b.is_static
+                    b.pos.y = b.pos.y + overlap_y / 2.0
+                end
             else
-                a.pos.y = a.pos.y + overlap_y / 2.0
-                b.pos.y = b.pos.y - overlap_y / 2.0
+                if not a.is_static
+                    a.pos.y = a.pos.y + overlap_y / 2.0
+                end
+                if not b.is_static
+                    b.pos.y = b.pos.y - overlap_y / 2.0
+                end
             end
 
             // Apply bounce
@@ -143,4 +240,23 @@ func resolve_collision(a: PhysicsBody, b: PhysicsBody) -> void
             end
         end
     end
+end
+
+public func bodies_collide(a: PhysicsBody, b: PhysicsBody, size_a: float, size_b: float) -> bool
+    var a_left = a.pos.x
+    var a_right = a.pos.x + size_a
+    var a_top = a.pos.y
+    var a_bottom = a.pos.y + size_a
+
+    var b_left = b.pos.x
+    var b_right = b.pos.x + size_b
+    var b_top = b.pos.y
+    var b_bottom = b.pos.y + size_b
+
+    return a_right > b_left and a_left < b_right and a_bottom > b_top and a_top < b_bottom
+end
+
+public func point_in_body(pos: vec2.Vec2, body: PhysicsBody, size: float) -> bool
+    return pos.x >= body.pos.x and pos.x <= body.pos.x + size
+       and pos.y >= body.pos.y and pos.y <= body.pos.y + size
 end

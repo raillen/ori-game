@@ -2,39 +2,210 @@ namespace ori.game.input
 
 import ori.math.vec2 as vec2
 
-// ── Keyboard ──────────────────────────────────────────────
+// ── Keyboard Constants ─────────────────────────────────────
+
+public const KEY_SPACE = 32
+public const KEY_ENTER = 257
+public const KEY_ESCAPE = 256
+public const KEY_BACKSPACE = 259
+public const KEY_TAB = 258
+public const KEY_RIGHT = 39
+public const KEY_LEFT = 37
+public const KEY_DOWN = 40
+public const KEY_UP = 38
+public const KEY_A = 65
+public const KEY_B = 66
+public const KEY_C = 67
+public const KEY_D = 68
+public const KEY_E = 69
+public const KEY_F = 70
+public const KEY_G = 71
+public const KEY_H = 72
+public const KEY_I = 73
+public const KEY_J = 74
+public const KEY_K = 75
+public const KEY_L = 76
+public const KEY_M = 77
+public const KEY_N = 78
+public const KEY_O = 79
+public const KEY_P = 80
+public const KEY_Q = 81
+public const KEY_R = 82
+public const KEY_S = 83
+public const KEY_T = 84
+public const KEY_U = 85
+public const KEY_V = 86
+public const KEY_W = 87
+public const KEY_X = 88
+public const KEY_Y = 89
+public const KEY_Z = 90
+public const KEY_0 = 48
+public const KEY_1 = 49
+public const KEY_2 = 50
+public const KEY_3 = 51
+public const KEY_4 = 52
+public const KEY_5 = 53
+public const KEY_6 = 54
+public const KEY_7 = 55
+public const KEY_8 = 56
+public const KEY_9 = 57
+
+// ── Mouse Constants ────────────────────────────────────────
+
+public const MOUSE_LEFT = 0
+public const MOUSE_RIGHT = 1
+public const MOUSE_MIDDLE = 2
+
+// ── Keyboard Functions ─────────────────────────────────────
 
 public func key_pressed(key: int) -> bool
     // Wrapper for rl.IsKeyPressed
+    // return rl.IsKeyPressed(key)
     return false // placeholder
 end
 
 public func key_down(key: int) -> bool
+    // Wrapper for rl.IsKeyDown
+    // return rl.IsKeyDown(key)
     return false // placeholder
 end
 
 public func key_released(key: int) -> bool
+    // Wrapper for rl.IsKeyReleased
+    // return rl.IsKeyReleased(key)
     return false // placeholder
 end
 
-// ── Mouse ─────────────────────────────────────────────────
+public func key_up(key: int) -> bool
+    // Wrapper for rl.IsKeyUp
+    // return rl.IsKeyUp(key)
+    return false // placeholder
+end
+
+public func get_key_pressed() -> int
+    // Wrapper for rl.GetKeyPressed
+    // return rl.GetKeyPressed()
+    return 0 // placeholder
+end
+
+// ── Mouse Functions ────────────────────────────────────────
 
 public func mouse_pos() -> vec2.Vec2
+    // Wrapper for rl.GetMousePosition
+    // return rl.GetMousePosition()
     return vec2.Vec2(x: 0.0, y: 0.0) // placeholder
 end
 
 public func mouse_delta() -> vec2.Vec2
+    // Wrapper for rl.GetMouseDelta
+    // return rl.GetMouseDelta()
     return vec2.Vec2(x: 0.0, y: 0.0) // placeholder
 end
 
 public func mouse_pressed(button: int) -> bool
+    // Wrapper for rl.IsMouseButtonPressed
+    // return rl.IsMouseButtonPressed(button)
     return false // placeholder
 end
 
 public func mouse_down(button: int) -> bool
+    // Wrapper for rl.IsMouseButtonDown
+    // return rl.IsMouseButtonDown(button)
     return false // placeholder
 end
 
 public func mouse_released(button: int) -> bool
+    // Wrapper for rl.IsMouseButtonReleased
+    // return rl.IsMouseButtonReleased(button)
     return false // placeholder
+end
+
+public func mouse_up(button: int) -> bool
+    // Wrapper for rl.IsMouseButtonUp
+    // return rl.IsMouseButtonUp(button)
+    return false // placeholder
+end
+
+public func mouse_wheel() -> float
+    // Wrapper for rl.GetMouseWheelMove
+    // return rl.GetMouseWheelMove()
+    return 0.0 // placeholder
+end
+
+// ── Gamepad Functions ──────────────────────────────────────
+
+public func gamepad_available(gamepad: int) -> bool
+    // Wrapper for rl.IsGamepadAvailable
+    // return rl.IsGamepadAvailable(gamepad)
+    return false // placeholder
+end
+
+public func gamepad_pressed(gamepad: int, button: int) -> bool
+    // Wrapper for rl.IsGamepadButtonPressed
+    // return rl.IsGamepadButtonPressed(gamepad, button)
+    return false // placeholder
+end
+
+public func gamepad_down(gamepad: int, button: int) -> bool
+    // Wrapper for rl.IsGamepadButtonDown
+    // return rl.IsGamepadButtonDown(gamepad, button)
+    return false // placeholder
+end
+
+public func gamepad_axis(gamepad: int, axis: int) -> float
+    // Wrapper for rl.GetGamepadAxisMovement
+    // return rl.GetGamepadAxisMovement(gamepad, axis)
+    return 0.0 // placeholder
+end
+
+// ── Input Helpers ──────────────────────────────────────────
+
+public func any_key_pressed() -> bool
+    return key_pressed(KEY_SPACE) or key_pressed(KEY_ENTER) or key_pressed(KEY_ESCAPE)
+end
+
+public func any_arrow_pressed() -> bool
+    return key_pressed(KEY_UP) or key_pressed(KEY_DOWN) or key_pressed(KEY_LEFT) or key_pressed(KEY_RIGHT)
+end
+
+public func get_movement_input() -> vec2.Vec2
+    var dir = vec2.Vec2(x: 0.0, y: 0.0)
+    if key_down(KEY_RIGHT)
+        dir.x = 1.0
+    end
+    if key_down(KEY_LEFT)
+        dir.x = -1.0
+    end
+    if key_down(KEY_DOWN)
+        dir.y = 1.0
+    end
+    if key_down(KEY_UP)
+        dir.y = -1.0
+    end
+    return dir
+end
+
+public func get_wasd_input() -> vec2.Vec2
+    var dir = vec2.Vec2(x: 0.0, y: 0.0)
+    if key_down(KEY_D)
+        dir.x = 1.0
+    end
+    if key_down(KEY_A)
+        dir.x = -1.0
+    end
+    if key_down(KEY_S)
+        dir.y = 1.0
+    end
+    if key_down(KEY_W)
+        dir.y = -1.0
+    end
+    return dir
+end
+
+public func is_confirm() -> bool
+    return key_pressed(KEY_SPACE) or key_pressed(KEY_ENTER)
+end
+
+public func is_cancel() -> bool
+    return key_pressed(KEY_ESCAPE) or key_pressed(KEY_BACKSPACE)
 end

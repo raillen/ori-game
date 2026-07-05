@@ -1,0 +1,12 @@
+This is a placeholder for the raylib static library.
+
+To build raylib for macOS:
+1. Download raylib source from https://github.com/raysan5/raylib
+2. Build: make PLATFORM=PLATFORM_DESKTOP
+3. Copy src/libraylib.a to this directory
+
+Or use CMake:
+mkdir build && cd build
+cmake -DCMAKE_BUILD_TYPE=Release ..
+make
+cp src/libraylib.a ..

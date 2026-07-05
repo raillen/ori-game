@@ -1,0 +1,13 @@
+This is a placeholder for the raylib static library.
+
+To build raylib for Windows MSVC:
+1. Download raylib source from https://github.com/raysan5/raylib
+2. Open raylib.sln in Visual Studio
+3. Build Release/x64 configuration
+4. Copy raylib.lib to this directory
+
+Or use CMake:
+mkdir build && cd build
+cmake -G "Visual Studio 17 2022" -A x64 ..
+cmake --build . --config Release
+copy Release\raylib.lib ..
