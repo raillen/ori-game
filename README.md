@@ -11,6 +11,12 @@ Game engine and raylib bindings for the Ori programming language.
 - Configurable gameplay mechanics (jumps, dashes, AI, physics)
 - Timer system for cooldowns and delays
 - Camera system with follow, shake, and limits
+- Dialogue system with choices
+- Inventory system
+- Particle system
+- Save/Load system
+- Audio manager
+- State machine for entity states
 
 ## Installation
 
@@ -59,18 +65,51 @@ end
 
 ## Documentation
 
+### Core
+
 - [shape.oridoc](shape.oridoc) — Formas geométricas
 - [collision.oridoc](collision.oridoc) — Detecção de colisão
 - [game/engine.oridoc](game/engine.oridoc) — Motor do jogo
+
+### Mechanics
+
 - [game/mechanics/jumps.oridoc](game/mechanics/jumps.oridoc) — Sistema de pulos
 - [game/mechanics/dash.oridoc](game/mechanics/dash.oridoc) — Sistema de dash
 - [game/mechanics/combat.oridoc](game/mechanics/combat.oridoc) — Sistema de combate
 - [game/mechanics/movement.oridoc](game/mechanics/movement.oridoc) — Movimentação
+- [game/mechanics/ai.oridoc](game/mechanics/ai.oridoc) — Comportamentos de IA
+- [game/mechanics/grab.oridoc](game/mechanics/grab.oridoc) — Agarrar e arrastar
+- [game/mechanics/ropes.oridoc](game/mechanics/ropes.oridoc) — Cordas
+- [game/mechanics/vehicles.oridoc](game/mechanics/vehicles.oridoc) — Veículos
+- [game/mechanics/platforms.oridoc](game/mechanics/platforms.oridoc) — Plataformas móveis
+
+### Game Systems
+
+- [game/dialogue.oridoc](game/dialogue.oridoc) — Sistema de diálogos
+- [game/inventory.oridoc](game/inventory.oridoc) — Sistema de inventário
+- [game/particles.oridoc](game/particles.oridoc) — Sistema de partículas
+- [game/save.oridoc](game/save.oridoc) — Sistema de save/load
+- [game/audio.oridoc](game/audio.oridoc) — Gerenciador de áudio
+- [game/state_machine.oridoc](game/state_machine.oridoc) — Máquina de estados
+
+### Guides
+
+- [docs/getting-started.md](docs/getting-started.md) — Guia de início rápido
+- [docs/api.md](docs/api.md) — Referência completa da API
 
 ## Examples
 
 - [hello_game.orl](examples/hello_game.orl) — Jogo simples com movimentação
 - [platformer.orl](examples/platformer.orl) — Plataforma com pulo e gravidade
+- [space_shooter.orl](examples/space_shooter.orl) — Tiro espacial com tiros e inimigos
+- [ai_demo.orl](examples/ai_demo.orl) — Demo de IA com patrulha e perseguição
+- [tilemap_demo.orl](examples/tilemap_demo.orl) — Demo de tilemap com colisão
+- [dialogue_demo.orl](examples/dialogue_demo.orl) — Demo de diálogo com NPC e escolhas
+- [inventory_demo.orl](examples/inventory_demo.orl) — Demo de inventário com coleta
+- [physics_demo.orl](examples/physics_demo.orl) — Demo de física com bolas
+- [particles_demo.orl](examples/particles_demo.orl) — Demo de partículas
+- [state_demo.orl](examples/state_demo.orl) — Demo de máquina de estados
+- [audio_demo.orl](examples/audio_demo.orl) — Demo de controle de áudio
 
 ## Module Structure
 
@@ -105,9 +144,10 @@ ori-game/
 │       ├── ropes.orl     # Ropes
 │       ├── vehicles.orl  # Vehicles
 │       └── platforms.orl # Moving platforms
-└── examples/
-    ├── hello_game.orl   # Basic example
-    └── platformer.orl   # Platformer example
+├── docs/
+│   ├── getting-started.md
+│   └── api.md
+└── examples/ (11 exemplos)
 ```
 
 ## License
