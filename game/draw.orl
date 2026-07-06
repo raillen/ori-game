@@ -1,246 +1,62 @@
 namespace ori.game.draw
 
+import ori.mem
 import ori.math.vec2 as vec2
 import ori.game.shape as shape
 import ori.game.color as color
 
-// ── Basic Drawing ──────────────────────────────────────────
+-- Raylib extern declarations for drawing
+extern c
+    func BeginDrawing() -> void
+    func EndDrawing() -> void
+    func ClearBackground(r: int, g: int, b: int, a: int) -> void
+    func DrawLineV(startX: float, startY: float, endX: float, endY: float, r: int, g: int, b: int, a: int) -> void
+    func DrawLineEx(startX: float, startY: float, endX: float, endY: float, thick: float, r: int, g: int, b: int, a: int) -> void
+    func DrawCircleV(centerX: float, centerY: float, radius: float, r: int, g: int, b: int, a: int) -> void
+    func DrawCircleLinesV(centerX: float, centerY: float, radius: float, r: int, g: int, b: int, a: int) -> void
+    func DrawRectangleRec(x: float, y: float, width: float, height: float, r: int, g: int, b: int, a: int) -> void
+    func DrawRectangleLinesEx(x: float, y: float, width: float, height: float, lineThick: int, r: int, g: int, b: int, a: int) -> void
+    func DrawTriangle(v1x: float, v1y: float, v2x: float, v2y: float, v3x: float, v3y: float, r: int, g: int, b: int, a: int) -> void
+    func DrawPoly(centerX: float, centerY: float, sides: int, radius: float, rotation: float, r: int, g: int, b: int, a: int) -> void
+    func DrawText(text: int, posX: int, posY: int, fontSize: int, r: int, g: int, b: int, a: int) -> void
+    func MeasureText(text: int, fontSize: int) -> int
+end
+
+-- Drawing helpers
 
 public func draw_rect(rect: shape.Rectangle, c: color.Color) -> void
-    // Wrapper for rl.DrawRectangleRec
-    // rl.DrawRectangleRec(rect, c)
+    DrawRectangleRec(rect.x, rect.y, rect.width, rect.height, c.r, c.g, c.b, c.a)
 end
 
 public func draw_rect_outline(rect: shape.Rectangle, c: color.Color, thickness: int) -> void
-    // Wrapper for rl.DrawRectangleLinesEx
-    // rl.DrawRectangleLinesEx(rect, thickness, c)
+    DrawRectangleLinesEx(rect.x, rect.y, rect.width, rect.height, thickness, c.r, c.g, c.b, c.a)
 end
-
-public func draw_rect_filled(x: float, y: float, width: float, height: float, c: color.Color) -> void
-    var rect = shape.Rectangle(x: x, y: y, width: width, height: height)
-    draw_rect(rect, c)
-end
-
-// ── Circle Drawing ────────────────────────────────────────
 
 public func draw_circle(center: vec2.Vec2, radius: float, c: color.Color) -> void
-    // Wrapper for rl.DrawCircleV
-    // rl.DrawCircleV(center, radius, c)
+    DrawCircleV(center.x, center.y, radius, c.r, c.g, c.b, c.a)
 end
 
 public func draw_circle_outline(center: vec2.Vec2, radius: float, c: color.Color) -> void
-    // Wrapper for rl.DrawCircleLinesV
-    // rl.DrawCircleLinesV(center, radius, c)
+    DrawCircleLinesV(center.x, center.y, radius, c.r, c.g, c.b, c.a)
 end
-
-public func draw_circle_filled(x: float, y: float, radius: float, c: color.Color) -> void
-    var center = vec2.Vec2(x: x, y: y)
-    draw_circle(center, radius, c)
-end
-
-// ── Line Drawing ──────────────────────────────────────────
 
 public func draw_line(a: vec2.Vec2, b: vec2.Vec2, c: color.Color, thickness: float) -> void
-    // Wrapper for rl.DrawLineEx
-    // rl.DrawLineEx(a, b, thickness, c)
+    DrawLineEx(a.x, a.y, b.x, b.y, thickness, c.r, c.g, c.b, c.a)
 end
-
-public func draw_line_thin(a: vec2.Vec2, b: vec2.Vec2, c: color.Color) -> void
-    draw_line(a, b, c, 1.0)
-end
-
-// ── Triangle Drawing ──────────────────────────────────────
 
 public func draw_triangle(v1: vec2.Vec2, v2: vec2.Vec2, v3: vec2.Vec2, c: color.Color) -> void
-    // Wrapper for rl.DrawTriangle
-    // rl.DrawTriangle(v1, v2, v3, c)
+    DrawTriangle(v1.x, v1.y, v2.x, v2.y, v3.x, v3.y, c.r, c.g, c.b, c.a)
 end
-
-public func draw_triangle_outline(v1: vec2.Vec2, v2: vec2.Vec2, v3: vec2.Vec2, c: color.Color) -> void
-    draw_line(v1, v2, c, 1.0)
-    draw_line(v2, v3, c, 1.0)
-    draw_line(v3, v1, c, 1.0)
-end
-
-// ── Polygon Drawing ───────────────────────────────────────
-
-public func draw_polygon(center: vec2.Vec2, sides: int, radius: float, rotation: float, c: color.Color) -> void
-    // Wrapper for rl.DrawPoly
-    // rl.DrawPoly(center, sides, radius, rotation, c)
-end
-
-// ── Text Drawing ──────────────────────────────────────────
 
 public func draw_text(text: string, pos: vec2.Vec2, size: int, c: color.Color) -> void
-    // Wrapper for rl.DrawText
-    // rl.DrawText(text.bytes, pos.x.int, pos.y.int, size, c)
+    var text_ptr: int = mem.string_as_ptr(text)
+    DrawText(text_ptr, pos.x.int, pos.y.int, size, c.r, c.g, c.b, c.a)
 end
 
 public func draw_text_centered(text: string, pos: vec2.Vec2, size: int, c: color.Color) -> void
-    // Calculate text width and center it
-    // var width = rl.MeasureText(text.bytes, size)
-    // var centered_pos = vec2.Vec2(x: pos.x - width.float / 2.0, y: pos.y - size.float / 2.0)
-    // rl.DrawText(text.bytes, centered_pos.x.int, centered_pos.y.int, size, c)
-end
-
-public func draw_text_right(text: string, pos: vec2.Vec2, size: int, c: color.Color) -> void
-    // Align text to the right
-    // var width = rl.MeasureText(text.bytes, size)
-    // var right_pos = vec2.Vec2(x: pos.x - width.float, y: pos.y)
-    // rl.DrawText(text.bytes, right_pos.x.int, right_pos.y.int, size, c)
-end
-
-// ── Texture Drawing ───────────────────────────────────────
-
-public func draw_texture(texture: Texture2D, pos: vec2.Vec2, c: color.Color) -> void
-    // Wrapper for rl.DrawTextureV
-    // rl.DrawTextureV(texture, pos, c)
-end
-
-public func draw_texture_ex(texture: Texture2D, pos: vec2.Vec2, rotation: float, scale: float, c: color.Color) -> void
-    // Wrapper for rl.DrawTextureEx
-    // rl.DrawTextureEx(texture, pos, rotation, scale, c)
-end
-
-public func draw_texture_rec(texture: Texture2D, source: shape.Rectangle, pos: vec2.Vec2, c: color.Color) -> void
-    // Wrapper for rl.DrawTextureRec
-    // rl.DrawTextureRec(texture, source, pos, c)
-end
-
-public func draw_texture_pro(texture: Texture2D, source: shape.Rectangle, dest: shape.Rectangle, origin: vec2.Vec2, rotation: float, c: color.Color) -> void
-    // Wrapper for rl.DrawTexturePro
-    // rl.DrawTexturePro(texture, source, dest, origin, rotation, c)
-end
-
-// ── Sprite Drawing ────────────────────────────────────────
-
-public func draw_sprite(texture: Texture2D, pos: vec2.Vec2, frame: int, frames_per_row: int, frame_width: int, frame_height: int, c: color.Color) -> void
-    var col = frame % frames_per_row
-    var row = frame / frames_per_row
-    var source = shape.Rectangle(
-        x: (col * frame_width).float,
-        y: (row * frame_height).float,
-        width: frame_width.float,
-        height: frame_height.float
-    )
-    draw_texture_rec(texture, source, pos, c)
-end
-
-public func draw_sprite_ex(texture: Texture2D, pos: vec2.Vec2, rotation: float, scale: float, frame: int, frames_per_row: int, frame_width: int, frame_height: int, c: color.Color) -> void
-    var col = frame % frames_per_row
-    var row = frame / frames_per_row
-    var source = shape.Rectangle(
-        x: (col * frame_width).float,
-        y: (row * frame_height).float,
-        width: frame_width.float,
-        height: frame_height.float
-    )
-    draw_texture_ex(texture, pos, rotation, scale, c)
-end
-
-// ── UI Drawing ────────────────────────────────────────────
-
-public func draw_panel(rect: shape.Rectangle, background: color.Color, border: color.Color, border_thickness: int) -> void
-    draw_rect(rect, background)
-    draw_rect_outline(rect, border, border_thickness)
-end
-
-public func draw_button(rect: shape.Rectangle, text: string, hovered: bool) -> bool
-    var bg = if hovered then color.LIGHTGRAY else color.DARKGRAY
-    var text_color = if hovered then color.BLACK else color.WHITE
-
-    draw_rect(rect, bg)
-    draw_rect_outline(rect, color.GRAY, 1)
-
-    var text_pos = vec2.Vec2(
-        x: rect.x + rect.width / 2.0,
-        y: rect.y + rect.height / 2.0
-    )
-    draw_text_centered(text, text_pos, 20, text_color)
-
-    return hovered
-end
-
-public func draw_progress_bar(x: float, y: float, width: float, height: float, progress: float, bg: color.Color, fill: color.Color) -> void
-    // Background
-    draw_rect(shape.Rectangle(x: x, y: y, width: width, height: height), bg)
-
-    // Fill
-    var fill_width = width * math.clamp(progress, 0.0, 1.0)
-    if fill_width > 0.0
-        draw_rect(shape.Rectangle(x: x, y: y, width: fill_width, height: height), fill)
-    end
-end
-
-public func draw_health_bar(x: float, y: float, width: float, height: float, current: int, maximum: int) -> void
-    var progress = current.float / maximum.float
-    var bg = color.DARKGRAY
-    var fill = if progress > 0.5 then color.GREEN else if progress > 0.25 then color.YELLOW else color.RED
-    draw_progress_bar(x, y, width, height, progress, bg, fill)
-end
-
-// ── Utility Drawing ───────────────────────────────────────
-
-public func draw_grid(width: float, height: float, cell_size: float, c: color.Color) -> void
-    for x in range(0, (width / cell_size).int + 1)
-        var px = x.float * cell_size
-        draw_line(vec2.Vec2(x: px, y: 0.0), vec2.Vec2(x: px, y: height), c, 1.0)
-    end
-    for y in range(0, (height / cell_size).int + 1)
-        var py = y.float * cell_size
-        draw_line(vec2.Vec2(x: 0.0, y: py), vec2.Vec2(x: width, y: py), c, 1.0)
-    end
-end
-
-public func draw_cross(pos: vec2.Vec2, size: float, c: color.Color) -> void
-    draw_line(
-        vec2.Vec2(x: pos.x - size, y: pos.y),
-        vec2.Vec2(x: pos.x + size, y: pos.y),
-        c, 1.0
-    )
-    draw_line(
-        vec2.Vec2(x: pos.x, y: pos.y - size),
-        vec2.Vec2(x: pos.x, y: pos.y + size),
-        c, 1.0
-    )
-end
-
-public func draw_arrow(from: vec2.Vec2, to: vec2.Vec2, c: color.Color, thickness: float) -> void
-    draw_line(from, to, c, thickness)
-
-    // Arrow head
-    var dir = vec2.normalize(to - from)
-    var perp = vec2.Vec2(x: -dir.y, y: dir.x)
-    var head_size = thickness * 3.0
-
-    var head1 = vec2.Vec2(
-        x: to.x - dir.x * head_size + perp.x * head_size * 0.5,
-        y: to.y - dir.y * head_size + perp.y * head_size * 0.5
-    )
-    var head2 = vec2.Vec2(
-        x: to.x - dir.x * head_size - perp.x * head_size * 0.5,
-        y: to.y - dir.y * head_size - perp.y * head_size * 0.5
-    )
-
-    draw_line(to, head1, c, thickness)
-    draw_line(to, head2, c, thickness)
-end
-
-public func draw_dashed_line(a: vec2.Vec2, b: vec2.Vec2, c: color.Color, thickness: float, dash_length: float, gap_length: float) -> void
-    var dir = vec2.normalize(b - a)
-    var dist = vec2.distance(a, b)
-    var pos = 0.0
-
-    while pos < dist
-        var start = vec2.Vec2(
-            x: a.x + dir.x * pos,
-            y: a.y + dir.y * pos
-        )
-        var end_pos = vec2.Vec2(
-            x: a.x + dir.x * math.min(pos + dash_length, dist),
-            y: a.y + dir.y * math.min(pos + dash_length, dist)
-        )
-        draw_line(start, end_pos, c, thickness)
-        pos = pos + dash_length + gap_length
-    end
+    var text_ptr: int = mem.string_as_ptr(text)
+    var width: int = MeasureText(text_ptr, size)
+    var centered_x: int = pos.x.int - width / 2
+    var centered_y: int = pos.y.int - size / 2
+    DrawText(text_ptr, centered_x, centered_y, size, c.r, c.g, c.b, c.a)
 end

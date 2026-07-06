@@ -7,6 +7,4 @@ description = "Game engine and raylib bindings for Ori language"
 authors = ["Ori Team"]
 license = "MIT"
 repository = "https://github.com/raillen/ori-game"
-
-[dependencies]
-ori = "0.2.0"
+native_libs = ["raylib"]

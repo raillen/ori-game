@@ -2,104 +2,46 @@ namespace ori.game.camera
 
 import ori.math.vec2 as vec2
 
-// ── Camera ────────────────────────────────────────────────
+-- Raylib extern declarations for camera
+extern c
+    func BeginMode2D(camera_offset_x: float, camera_offset_y: float, camera_target_x: float, camera_target_y: float, camera_rotation: float, camera_zoom: float) -> void
+    func EndMode2D() -> void
+end
 
+-- Camera struct
 public struct Camera
-    pos: vec2.Vec2
-    zoom: float = 1.0
-    target: vec2.Vec2 = nil
-    follow_speed: float = 5.0
-    shake_intensity: float = 0.0
-    shake_duration: float = 0.0
-    shake_timer: float = 0.0
-    limits_min: vec2.Vec2 = nil
-    limits_max: vec2.Vec2 = nil
-    smoothing: float = 0.1
+    offset: vec2.Vec2
+    target: vec2.Vec2
+    rotation: float
+    zoom: float
 end
 
-public func create_camera(pos: vec2.Vec2) -> Camera
-    return Camera(pos: pos)
+-- Camera functions
+public func create_camera(offset: vec2.Vec2, target: vec2.Vec2) -> Camera
+    return Camera(
+        offset: offset,
+        target: target,
+        rotation: 0.0,
+        zoom: 1.0
+    )
 end
 
-public func update_camera(cam: Camera, dt: float) -> void
-    // Follow target with smooth interpolation
-    if cam.target != nil
-        var diff_x = cam.target.x - cam.pos.x
-        var diff_y = cam.target.y - cam.pos.y
-        cam.pos.x = cam.pos.x + diff_x * cam.follow_speed * dt
-        cam.pos.y = cam.pos.y + diff_y * cam.follow_speed * dt
-    end
-
-    // Apply screen shake
-    if cam.shake_duration > 0.0
-        cam.shake_timer = cam.shake_timer + dt
-        if cam.shake_timer < cam.shake_duration
-            var shake_x = (math.random(-1.0, 1.0) * cam.shake_intensity).float
-            var shake_y = (math.random(-1.0, 1.0) * cam.shake_intensity).float
-            cam.pos.x = cam.pos.x + shake_x
-            cam.pos.y = cam.pos.y + shake_y
-        else
-            cam.shake_duration = 0.0
-            cam.shake_timer = 0.0
-        end
-    end
-
-    // Apply limits
-    if cam.limits_min != nil and cam.limits_max != nil
-        cam.pos.x = math.clamp(cam.pos.x, cam.limits_min.x, cam.limits_max.x)
-        cam.pos.y = math.clamp(cam.pos.y, cam.limits_min.y, cam.limits_max.y)
-    end
+public func begin_2d(cam: Camera) -> void
+    BeginMode2D(
+        cam.offset.x, cam.offset.y,
+        cam.target.x, cam.target.y,
+        cam.rotation, cam.zoom
+    )
 end
 
-public func camera_shake(cam: Camera, intensity: float, duration: float) -> void
-    cam.shake_intensity = intensity
-    cam.shake_duration = duration
-    cam.shake_timer = 0.0
-end
-
-public func set_limits(cam: Camera, min: vec2.Vec2, max: vec2.Vec2) -> void
-    cam.limits_min = min
-    cam.limits_max = max
-end
-
-public func follow(cam: Camera, target_pos: vec2.Vec2) -> void
-    cam.target = target_pos
-end
-
-public func unfollow(cam: Camera) -> void
-    cam.target = nil
+public func end_2d() -> void
+    EndMode2D()
 end
 
 public func set_zoom(cam: Camera, zoom: float) -> void
-    cam.zoom = math.clamp(zoom, 0.1, 10.0)
+    cam.zoom = zoom
 end
 
-public func zoom_in(cam: Camera, amount: float) -> void
-    cam.zoom = math.clamp(cam.zoom + amount, 0.1, 10.0)
-end
-
-public func zoom_out(cam: Camera, amount: float) -> void
-    cam.zoom = math.clamp(cam.zoom - amount, 0.1, 10.0)
-end
-
-public func screen_to_world(cam: Camera, screen_pos: vec2.Vec2) -> vec2.Vec2
-    return vec2.Vec2(
-        x: (screen_pos.x / cam.zoom) + cam.pos.x,
-        y: (screen_pos.y / cam.zoom) + cam.pos.y
-    )
-end
-
-public func world_to_screen(cam: Camera, world_pos: vec2.Vec2) -> vec2.Vec2
-    return vec2.Vec2(
-        x: (world_pos.x - cam.pos.x) * cam.zoom,
-        y: (world_pos.y - cam.pos.y) * cam.zoom
-    )
-end
-
-public func is_on_screen(cam: Camera, pos: vec2.Vec2, width: float, height: float) -> bool
-    var screen_pos = world_to_screen(cam, pos)
-    return screen_pos.x + width > 0.0
-       and screen_pos.x < 800.0 / cam.zoom
-       and screen_pos.y + height > 0.0
-       and screen_pos.y < 600.0 / cam.zoom
+public func follow(cam: Camera, target: vec2.Vec2) -> void
+    cam.target = target
 end

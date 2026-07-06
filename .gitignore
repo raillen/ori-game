@@ -1,16 +1,19 @@
-# Compiled binaries
+# Compiled binaries (except vendored libraries)
 *.o
 *.obj
-*.lib
 *.a
 *.so
 *.dylib
 *.dll
 
+# Allow raylib.lib in lib/
+!lib/**/*.lib
+
 # Build directories
 target/
 build/
 dist/
+raylib_source/
 
 # IDE files
 .vscode/
@@ -25,3 +28,6 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.bak
+
+# Placeholder files
+*.placeholder
