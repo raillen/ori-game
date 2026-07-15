@@ -1,6 +1,11 @@
 #!/usr/bin/env sh
 # Umbrella smoke: each ECO package smoke + cross-package integration demos.
-set -eu
+# Continues after individual failures; exits non-zero if any package failed.
+# Env:
+#   ORI_BIN              path to ori compiler
+#   ECO_SMOKE_SKIP_GAME=1  skip ori-game full smoke (ports-only)
+#   ECO_SMOKE_SKIP_DEMOS=1 skip integration demos
+set -u
 
 ORI_BIN="${ORI_BIN:-}"
 if [ -z "$ORI_BIN" ]; then
@@ -18,6 +23,36 @@ script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 game_root=$(CDPATH= cd -- "$script_dir/.." && pwd)
 proj_root=$(CDPATH= cd -- "$game_root/.." && pwd)
 
+ok_count=0
+fail_count=0
+skip_count=0
+
+# ori-raylib smoke installs a headless *stub* that can overwrite a full
+# libraylib.a. Restore full artifacts from ori-game when present so path-deps
+# used by later packages (and ori-game) keep a real raylib.
+restore_full_raylib_if_staged() {
+    triple=x86_64-unknown-linux-gnu
+    src="$game_root/lib/$triple"
+    dst="$proj_root/ori-raylib/lib/$triple"
+    if [ -f "$src/libraylib.a" ] && [ -f "$src/libori_raylib_shim.a" ] \
+        && [ -d "$dst" ]; then
+        src_sz=$(wc -c < "$src/libraylib.a")
+        dst_sz=0
+        if [ -f "$dst/libraylib.a" ]; then
+            dst_sz=$(wc -c < "$dst/libraylib.a")
+        fi
+        # Full raylib is multi-MB; stub dummy is ~1KB.
+        if [ "$src_sz" -gt 100000 ] && [ "$dst_sz" -lt 100000 ]; then
+            echo "restoring full raylib into ori-raylib (stub was smaller)"
+            cp -a "$src/libraylib.a" "$dst/libraylib.a"
+            cp -a "$src/libori_raylib_shim.a" "$dst/libori_raylib_shim.a"
+            if [ -f "$src/raylib.h" ]; then
+                cp -a "$src/raylib.h" "$dst/raylib.h"
+            fi
+        fi
+    fi
+}
+
 run_pkg_smoke() {
     name=$1
     dir=$2
@@ -26,14 +61,37 @@ run_pkg_smoke() {
     echo "======== ECO smoke: $name ========"
     if [ ! -d "$dir" ]; then
         echo "SKIP $name (missing $dir)"
+        skip_count=$((skip_count + 1))
         return 0
     fi
-    (CDPATH= cd -- "$dir" && ORI_BIN="$ORI_BIN" sh "$smoke")
+    if [ ! -f "$dir/$smoke" ]; then
+        echo "SKIP $name (no $smoke)"
+        skip_count=$((skip_count + 1))
+        return 0
+    fi
+    if (CDPATH= cd -- "$dir" && ORI_BIN="$ORI_BIN" sh "$smoke"); then
+        echo "OK $name"
+        ok_count=$((ok_count + 1))
+        return 0
+    fi
+    echo "FAIL $name"
+    fail_count=$((fail_count + 1))
+    return 0
 }
 
 # Core Linux-5 stack
 run_pkg_smoke "ori-raylib" "$proj_root/ori-raylib" "./tools/smoke_linux.sh"
-run_pkg_smoke "ori-game" "$game_root" "./tools/smoke_linux.sh"
+restore_full_raylib_if_staged
+
+if [ "${ECO_SMOKE_SKIP_GAME:-0}" = "1" ]; then
+    echo ""
+    echo "======== ECO smoke: ori-game ========"
+    echo "SKIP ori-game (ECO_SMOKE_SKIP_GAME=1)"
+    skip_count=$((skip_count + 1))
+else
+    run_pkg_smoke "ori-game" "$game_root" "./tools/smoke_linux.sh"
+fi
+
 run_pkg_smoke "ori-box2d" "$proj_root/ori-box2d" "./tools/smoke_linux.sh"
 run_pkg_smoke "ori-jolt" "$proj_root/ori-jolt" "./tools/smoke_linux.sh"
 run_pkg_smoke "ori-imgui" "$proj_root/ori-imgui" "./tools/smoke_linux.sh"
@@ -63,14 +121,26 @@ run_pkg_smoke "ori-clay" "$proj_root/ori-clay" "./tools/smoke_linux.sh"
 run_pkg_smoke "ori-lz4" "$proj_root/ori-lz4" "./tools/smoke_linux.sh"
 run_pkg_smoke "ori-recast" "$proj_root/ori-recast" "./tools/smoke_linux.sh"
 
-echo ""
-echo "======== Integration demos ========"
-run_pkg_smoke "box2d_visual" "$proj_root/ori-box2d/demos/box2d_visual" "./tools/smoke.sh"
-run_pkg_smoke "jolt_boxes_3d" "$proj_root/ori-jolt/demos/jolt_boxes_3d" "./tools/smoke.sh"
-run_pkg_smoke "raygui_game" "$proj_root/ori-raygui/demos/raygui_game" "./tools/smoke.sh"
-run_pkg_smoke "score_game" "$proj_root/ori-sqlite/demos/score_game" "./tools/smoke.sh"
-run_pkg_smoke "imgui_game" "$proj_root/ori-imgui/demos/imgui_game" "./tools/smoke.sh"
-run_pkg_smoke "rres_assets" "$game_root/demos/rres_assets" "./tools/smoke.sh"
+if [ "${ECO_SMOKE_SKIP_DEMOS:-0}" = "1" ]; then
+    echo ""
+    echo "======== Integration demos ========"
+    echo "SKIP demos (ECO_SMOKE_SKIP_DEMOS=1)"
+else
+    echo ""
+    echo "======== Integration demos ========"
+    run_pkg_smoke "box2d_visual" "$proj_root/ori-box2d/demos/box2d_visual" "./tools/smoke.sh"
+    run_pkg_smoke "jolt_boxes_3d" "$proj_root/ori-jolt/demos/jolt_boxes_3d" "./tools/smoke.sh"
+    run_pkg_smoke "raygui_game" "$proj_root/ori-raygui/demos/raygui_game" "./tools/smoke.sh"
+    run_pkg_smoke "score_game" "$proj_root/ori-sqlite/demos/score_game" "./tools/smoke.sh"
+    run_pkg_smoke "imgui_game" "$proj_root/ori-imgui/demos/imgui_game" "./tools/smoke.sh"
+    run_pkg_smoke "rres_assets" "$game_root/demos/rres_assets" "./tools/smoke.sh"
+fi
 
 echo ""
+echo "smoke_eco_linux: ok=$ok_count fail=$fail_count skip=$skip_count"
+if [ "$fail_count" -gt 0 ]; then
+    echo "smoke_eco_linux: FAILED"
+    exit 1
+fi
 echo "smoke_eco_linux: all green"
+exit 0

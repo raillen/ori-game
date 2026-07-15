@@ -3,6 +3,11 @@
 ## [Unreleased]
 
 ### Fixed
+- Inherit `raylib` `native_libs` from path-dep only (avoid dual-link of `ori_rl_*`).
+- `tools/smoke_eco_linux.sh`: continue after package failures; restore full raylib after stub smoke; `ECO_SMOKE_SKIP_GAME` / `ECO_SMOKE_SKIP_DEMOS`.
+
+
+### Fixed
 - **Sample Play opens a game window:** `main()` now calls `game.app.run_window` (was empty → silent exit). Verified raylib 5.5 InitWindow 1280×720.
 - **`native_libs` on sample/scaffold without staged `lib/`:** removed; libs resolve via path-dep `ori_game`/`raylib` `.a`. Studio Play forces `ORI_USE_AOT=1` (JIT needs `.so` not staged).
 - **New Project scaffold:** windowed `main.orl` + package without false `native_libs`.
