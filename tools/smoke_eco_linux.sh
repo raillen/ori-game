@@ -1,10 +1,19 @@
 #!/usr/bin/env sh
 # Umbrella smoke: each ECO package smoke + cross-package integration demos.
 # Continues after individual failures; exits non-zero if any package failed.
+#
+# Layout: proj_root = parent of ori-game (= game-engine-full/). Each package is
+#   $proj_root/ori-<name>/ with ./tools/smoke_linux.sh (missing dir/script → SKIP).
+#
 # Env:
-#   ORI_BIN              path to ori compiler
-#   ECO_SMOKE_SKIP_GAME=1  skip ori-game full smoke (ports-only)
-#   ECO_SMOKE_SKIP_DEMOS=1 skip integration demos
+#   ORI_BIN                 path to ori compiler (required unless `ori` on PATH)
+#   ORI_USE_SYSTEM_LINKER   default 1 (set by this script if unset)
+#   ECO_SMOKE_SKIP_GAME=1   skip ori-game full smoke (ports-only)
+#   ECO_SMOKE_SKIP_DEMOS=1  skip integration demos (box2d_visual, jolt_boxes_3d, …)
+#
+# Packages covered: raylib, game, box2d, jolt, imgui, raygui, rres, sqlite, enet,
+#   freetype, harfbuzz, stb, noise, miniz, nfd, implot, imnodes, imguizmo, tracy,
+#   enkiTS, cgltf, fast-obj, physfs, clay, lz4, recast (+ optional demos).
 set -u
 
 ORI_BIN="${ORI_BIN:-}"
