@@ -17,9 +17,16 @@ raylib = { path = "../ori-raylib", version = "0.1.0" }
 rres = { path = "../ori-rres", version = "0.3.0" }
 # Optional: `game.font_atlas` (FreeType gray atlas → texture)
 freetype = { path = "../ori-freetype", version = "0.1.0" }
-# Optional: `game.gltf` imports `cgltf.loader` (glTF/GLB metadata)
-cgltf = { path = "../ori-cgltf", version = "0.1.0" }
-# Optional: `game.obj` imports `fast_obj.mesh` (Wavefront OBJ metadata)
-fast_obj = { path = "../ori-fast-obj", version = "0.1.0" }
-# Optional: `game.physfs_assets` imports `physfs.fs` (virtual FS mounts)
-physfs = { path = "../ori-physfs", version = "0.1.0" }
+# Optional: `game.gltf` imports `cgltf.loader` (glTF/GLB + interleaved export)
+cgltf = { path = "../ori-cgltf", version = "0.2.0" }
+# Optional: `game.obj` imports `fast_obj.mesh` (Wavefront OBJ + mesh export)
+fast_obj = { path = "../ori-fast-obj", version = "0.2.0" }
+# Optional: `game.physfs_assets` imports `physfs.fs` (virtual FS mounts + write)
+physfs = { path = "../ori-physfs", version = "0.2.0" }
+# Optional: `game.noise` imports `noise.fnl` (FastNoiseLite)
+noise = { path = "../ori-noise", version = "0.2.0" }
+# Optional: `game.compress` imports `lz4.codec` / `miniz.deflate`
+lz4 = { path = "../ori-lz4", version = "0.2.0" }
+miniz = { path = "../ori-miniz", version = "0.2.0" }
+# Optional: `game.navmesh` imports `recast.nav` (navmesh path query)
+recast = { path = "../ori-recast", version = "0.2.0" }

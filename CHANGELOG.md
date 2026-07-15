@@ -2,6 +2,15 @@
 
 ## [Unreleased]
 
+### Added
+- **ECO PR17 — optional package wires deepen (Linux):**
+  - `game.gltf` / `game.obj`: mesh export helpers from cgltf/fast_obj **0.2** (interleaved buffers, materials, node TRS).
+  - `game.physfs_assets`: write-dir / mkdir / write + multi-mount re-exports (physfs **0.2**).
+  - New thin modules: `game.noise` → `noise.fnl`, `game.compress` → lz4 + miniz, `game.navmesh` → `recast.nav` (leaf unique vs package).
+  - Path deps in `ori.pkg.toml`: cgltf/fast_obj/physfs **0.2.0**; noise/lz4/miniz/recast **0.2.0**.
+  - Tests: `test_gltf`, `test_obj`, `test_physfs_assets`, `test_noise`, `test_compress`, `test_navmesh` (fixtures upgraded).
+  - Still **no** `native_libs` on `ori_game` (path-dep only).
+
 ### Fixed
 - Inherit `raylib` `native_libs` from path-dep only (avoid dual-link of `ori_rl_*`).
 - `tools/smoke_eco_linux.sh`: continue after package failures; restore full raylib after stub smoke; `ECO_SMOKE_SKIP_GAME` / `ECO_SMOKE_SKIP_DEMOS`.
@@ -12,7 +21,12 @@
 - **`native_libs` on sample/scaffold without staged `lib/`:** removed; libs resolve via path-dep `ori_game`/`raylib` `.a`. Studio Play forces `ORI_USE_AOT=1` (JIT needs `.so` not staged).
 - **New Project scaffold:** windowed `main.orl` + package without false `native_libs`.
 
+### Changed
+- **`docs/planning/PLANO-IMPLEMENTACAO-STUDIO.md`:** reescrito para visão ECS-lite/híbrido, Studio ori-imgui destino, IDE externa, fases A–F / G1 (Tauri = transição).
+- **`STUDIO-PRODUCT-DECISIONS.md` + `ORI-GAME-STUDIO-VISAO.md`:** alinhados à visão 2026-07-15.
+
 ### Added
+- **`docs/planning/ROADMAP-GAME-ECO.md`:** full Dear ImGui extensions catalog (all listed libs, links, P0–P4, packaging) + link to `IMGUI-EXTENSIONS-RANKING.md`.
 - **Optional path-dep wires (ECO PR8):** `cgltf` / `fast_obj` / `physfs` path deps in `ori.pkg.toml`; thin helpers `game.gltf` (`cgltf.loader`), `game.obj` (`fast_obj.mesh`), `game.physfs_assets` (`physfs.fs`). Fixtures under `tests/fixtures/`; tests `test_gltf`, `test_obj`, `test_physfs_assets`.
 - **`docs/planning/PLANO-AMADURECIMENTO-ENGINE.md`:** full maturation plan — GM/Unity/Godot philosophy & architecture, complete missing-features backlog, phases A→E, gate **G1 first game**, ImGui Studio decision, implementation queue.
 - **`docs/planning/STUDY-ENGINES.md`:** study protocol; Godot source at `Documentos/Projetos/study-godot` (shallow clone).

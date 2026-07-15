@@ -13,7 +13,10 @@
   "nodes": [
     {
       "name": "Triangle",
-      "mesh": 0
+      "mesh": 0,
+      "translation": [1.5, 2.0, -0.5],
+      "rotation": [0.0, 0.0, 0.0, 1.0],
+      "scale": [2.0, 2.0, 2.0]
     }
   ],
   "meshes": [
@@ -22,9 +25,10 @@
       "primitives": [
         {
           "attributes": {
-            "POSITION": 0
+            "POSITION": 0,
+            "NORMAL": 1
           },
-          "indices": 1,
+          "indices": 2,
           "material": 0
         }
       ]
@@ -32,9 +36,9 @@
   ],
   "materials": [
     {
-      "name": "Default",
+      "name": "Tinted",
       "pbrMetallicRoughness": {
-        "baseColorFactor": [1.0, 1.0, 1.0, 1.0],
+        "baseColorFactor": [0.5, 0.25, 1.0, 1.0],
         "metallicFactor": 0.0,
         "roughnessFactor": 1.0
       }
@@ -51,6 +55,12 @@
     },
     {
       "bufferView": 1,
+      "componentType": 5126,
+      "count": 3,
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 2,
       "componentType": 5123,
       "count": 3,
       "type": "SCALAR"
@@ -66,14 +76,20 @@
     {
       "buffer": 0,
       "byteOffset": 36,
+      "byteLength": 36,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 72,
       "byteLength": 6,
       "target": 34963
     }
   ],
   "buffers": [
     {
-      "byteLength": 42,
-      "uri": "data:application/octet-stream;base64,AAAAAAAAAAAAAAAAAACAPwAAAAAAAAAAAAAAAAAAgD8AAAAAAAABAAIA"
+      "byteLength": 78,
+      "uri": "data:application/octet-stream;base64,AAAAAAAAAAAAAAAAAACAPwAAAAAAAAAAAAAAAAAAgD8AAAAAAAAAAAAAAAAAAIA/AAAAAAAAAAAAAIA/AAAAAAAAAAAAAIA/AAABAAIA"
     }
   ]
 }
