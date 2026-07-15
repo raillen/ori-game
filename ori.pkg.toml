@@ -1,10 +1,24 @@
 [package]
 name = "ori_game"
-version = "0.1.0"
-entry = "raylib.orl"
-ori_version = "0.2.0"
-description = "Game engine and raylib bindings for Ori language"
+version = "0.3.0"
+entry = "game/app.orl"
+ori_version = "0.3.0"
+description = "Game helpers (L1) for Ori — L0 raylib lives in ori-raylib"
 authors = ["Ori Team"]
 license = "MIT"
 repository = "https://github.com/raillen/ori-game"
-native_libs = ["raylib"]
+native_libs = ["ori_raylib_shim", "raylib"]
+
+[dependencies]
+# L0 raylib (module `raylib`); stage libs with tools/setup_raylib_linux.sh
+raylib = { path = "../ori-raylib", version = "0.1.0" }
+# Optional: `game.rres_assets` imports `rres.pack`
+rres = { path = "../ori-rres", version = "0.3.0" }
+# Optional: `game.font_atlas` (FreeType gray atlas → texture)
+freetype = { path = "../ori-freetype", version = "0.1.0" }
+# Optional: `game.gltf` imports `cgltf.load` (glTF/GLB metadata)
+cgltf = { path = "../ori-cgltf", version = "0.1.0" }
+# Optional: `game.obj` imports `fast_obj.load` (Wavefront OBJ metadata)
+fast_obj = { path = "../ori-fast-obj", version = "0.1.0" }
+# Optional: `game.physfs_assets` imports `physfs.fs` (virtual FS mounts)
+physfs = { path = "../ori-physfs", version = "0.1.0" }

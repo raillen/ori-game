@@ -1,0 +1,26 @@
+module test.obj
+
+imports
+    game.obj = obj
+    ori.test = test
+end
+
+@test
+load_triangle()
+    test.assert(obj.load("tests/fixtures/triangle.obj"), "load triangle.obj")
+    -- 3 verts + dummy → position_count == 4
+    test.assert(obj.position_count() > 0, "position_count")
+    test.assert(obj.face_count() > 0, "face_count")
+    test.equal_int(obj.position_count(), 4)
+    test.equal_int(obj.face_count(), 1)
+    test.equal_int(obj.index_count(), 3)
+    test.equal_int(obj.pos_m(1, 0), 1000)
+    obj.free()
+    test.equal_int(obj.position_count(), 0)
+end
+
+@test
+load_missing_fails()
+    test.assert(not obj.load("tests/fixtures/does_not_exist.obj"), "missing")
+    test.equal_int(obj.position_count(), 0)
+end

@@ -1,0 +1,22 @@
+module test.gltf
+
+imports
+    game.gltf = gltf
+    ori.test = test
+end
+
+@test
+load_minimal_triangle()
+    test.assert(gltf.load_file("tests/fixtures/minimal.gltf"), "load minimal.gltf")
+    test.assert(gltf.mesh_count() > 0, "mesh_count")
+    test.assert(gltf.node_count() > 0, "node_count")
+    test.assert(gltf.material_count() > 0, "material_count")
+    test.equal_int(gltf.mesh0_vertex_count(), 3)
+    gltf.free()
+end
+
+@test
+load_missing_fails()
+    test.assert(not gltf.load_file("tests/fixtures/does_not_exist.gltf"), "missing")
+    test.equal_int(gltf.mesh_count(), 0)
+end

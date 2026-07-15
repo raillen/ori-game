@@ -31,3 +31,6 @@ Thumbs.db
 
 # Placeholder files
 *.placeholder
+
+# Wavefront OBJ fixtures used by unit tests (not compiled objects)
+!tests/fixtures/**/*.obj

@@ -1,0 +1,22 @@
+module test.physfs_assets
+
+imports
+    game.physfs_assets = pfs
+    ori.test = test
+end
+
+@test
+mount_exists_read()
+    test.assert(pfs.init(), "init")
+    test.assert(pfs.mount("tests/fixtures/physfs_root", ""), "mount fixture dir")
+    test.assert(pfs.exists("hello.txt"), "exists hello.txt")
+    test.assert(not pfs.exists("no-such-file-xyz"), "missing")
+    const n: int = pfs.read("hello.txt")
+    test.equal_int(n, 13)
+    test.equal_int(pfs.last_len(), 13)
+    test.assert(pfs.last_sum() > 0, "sum")
+    -- first byte of "hello-physfs\n" is 'h' = 104
+    test.equal_int(pfs.last_byte(0), 104)
+    test.assert(pfs.enumerate_count("") >= 1, "enumerate")
+    test.assert(pfs.deinit(), "deinit")
+end

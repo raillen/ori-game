@@ -1,0 +1,43 @@
+module game.obj
+
+-- Thin glue: Wavefront OBJ metadata via package `fast_obj` (`fast_obj.mesh`).
+-- Path-dep `fast_obj` on ori_game; links `ori_fast_obj_shim`. No mesh upload.
+-- Note: package module is `fast_obj.mesh` (not `*.load`) so dual path-dep with
+-- `cgltf.gltf` does not hit last-segment import ambiguity.
+
+import fast_obj.mesh = obj
+
+-- Load Wavefront OBJ from path. Returns true on success.
+public load(path: string) -> bool
+    return obj.load(path)
+end
+
+public free() -> void
+    obj.free()
+end
+
+-- Includes dummy zero entry at index 0 (fast_obj convention).
+public position_count() -> int
+    return obj.position_count()
+end
+
+public face_count() -> int
+    return obj.face_count()
+end
+
+public normal_count() -> int
+    return obj.normal_count()
+end
+
+public texcoord_count() -> int
+    return obj.texcoord_count()
+end
+
+public index_count() -> int
+    return obj.index_count()
+end
+
+-- Real vertex index (0-based); returns milli-float (value * 1000).
+public pos_m(vertex_index: int, axis: int) -> int
+    return obj.pos_m(vertex_index, axis)
+end
